@@ -6,9 +6,11 @@ resource "aws_iam_policy" "ec2_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
-        Action = [
-          "s3:*",
+        Effect   = "Allow"
+        Action   = [
+          "sts:GetCallerIdentity",
+          "ec2:DescribeInstances",
+          "s3:ListAllMyBuckets",
           "cloudwatch:*"
         ]
         Resource = "*"
@@ -49,11 +51,13 @@ resource "aws_security_group" "ec2_security_group" {
   description = "CloudGoat ${var.cgid} Security Group for EC2 Instance over SSH"
   vpc_id      = aws_vpc.vpc.id
 
+  # Misconfiguration: SSH open to entire internet (0.0.0.0/0)
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.cg_whitelist
+    # cidr_blocks = var.cg_whitelist
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
