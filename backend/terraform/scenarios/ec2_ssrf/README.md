@@ -6,6 +6,11 @@
 
 **Command:** `$ ./cloudgoat.py create ec2_ssrf`
 
+## Misconfigs
+
+- IMDSv1 -> metadata_options { http_tokens = "optional" } on ubuntu_ec2
+- Open SSH -> no whitelist, SSH open to 0.0.0.0
+
 ## Scenario Resources
 
 - 1 VPC with:
