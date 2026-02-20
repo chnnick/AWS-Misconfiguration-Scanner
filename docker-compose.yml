@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:5.15
+    container_name: cspm-neo4j
+    ports:
+      - "7474:7474"   # Neo4j Browser (http://localhost:7474)
+      - "7687:7687"   # for Python connection - Bolt
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      # Auto-run schema.cypher on first startup
+      - NEO4J_dbms_directories_import=import
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+      # Mounts init-scripts folder into Neo4j's import directory
+      - ./neo4j/init-scripts:/var/lib/neo4j/import
+    # Waits for Neo4j to be ready, then runs schema.cypher
+    entrypoint: >
+      bash -c "
+      /startup/docker-entrypoint.sh neo4j &
+      echo 'Waiting for Neo4j to start...' &&
+      sleep 20 &&
+      echo 'Loading schema...' &&
+      cypher-shell -u ${NEO4J_USER} -p ${NEO4J_PASSWORD} --file /var/lib/neo4j/import/schema.cypher &&
+      echo 'Schema loaded successfully!' &&
+      wait
+      "
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER} -p ${NEO4J_PASSWORD} 'RETURN 1'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
