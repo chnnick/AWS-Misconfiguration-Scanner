@@ -5,6 +5,11 @@
 .env.test.local
 .env.production.local
 
+# Secrets Files, filler names atm
+secrets.yml
+config.json
+credentials.json
+
 # Logs
 logs
 *.log
@@ -32,6 +37,8 @@ dist/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+ENV/
+.Python
 
 
 # Frontend build artifacts
@@ -70,6 +77,8 @@ terraform.rc
 *.pem
 *credentials*
 *.key
+cloudgoat
+cloudgoat.pub
 
 # Neo4j
 neo4j/data/

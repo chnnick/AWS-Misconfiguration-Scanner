@@ -41,3 +41,7 @@ venv/
 .DS_Store
 **/.DS_Store
 .vscode/
+
+# Neo4j data
+neo4j/data/
+neo4j/logs/
