@@ -381,10 +381,6 @@ prod-backup           | DB_PASSWORD    | .../config.json          | 95
 ```cypher
 // View all S3 buckets
 MATCH (b:S3Bucket) RETURN b LIMIT 10;
-
-// Click on nodes to see properties
-// Drag nodes to rearrange
-// Double-click to expand relationships
 ```
 
 ---
@@ -553,27 +549,19 @@ RETURN s3_count as S3Buckets,
 
 ## Risk Scoring Model
 
-> **⚠️ NOTE:** Risk scoring criteria and formulas are currently under development and will be updated in future iterations of this project. The scoring system will be based on industry-standard frameworks (CVSS, OWASP Risk Rating) and will consider factors such as:
-> - Exploitability (attack complexity, privileges required)
-> - Impact (confidentiality, integrity, availability)
-> - Scope (blast radius, lateral movement potential)
-> 
-> **Placeholder values** in the current schema (e.g., `risk_score = 95`) are for demonstration purposes only and will be replaced with calculated scores once the risk scoring algorithm is finalized.
->
-> **For now:** Risk scores are assigned by the Python collectors based on preliminary heuristics. The final scoring model will be documented here once validated.
-
+> **NOTE:** Risk scoring criteria and formulas are currently under development and will be updated in future iterations.. The scoring system will be based on industry-standard frameworks.
 ---
 
 ## Summary
 
 ### What You Can Do With This Graph
 
-✅ **Find attack paths** - Trace how attackers move through your infrastructure  
-✅ **Calculate blast radius** - See total impact of a single compromise  
-✅ **Answer relationship questions** - "Which EC2s can access sensitive data?"  
-✅ **Generate compliance reports** - OWASP Top 10, CIS Benchmarks  
-✅ **Prioritize fixes** - Focus on highest risk resources first  
-✅ **Visualize infrastructure** - See everything at once  
+**Find attack paths** - Trace how attackers move through your infrastructure  
+**Calculate blast radius** - See total impact of a single compromise  
+**Answer relationship questions** - "Which EC2s can access sensitive data?"  
+**Generate compliance reports** - OWASP Top 10, CIS Benchmarks  
+**Prioritize fixes** - Focus on highest risk resources first  
+**Visualize infrastructure** - See everything at once  
 
 ### Quick Reference
 
