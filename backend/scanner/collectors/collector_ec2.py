@@ -14,7 +14,9 @@ ec2_client = boto3.client("ec2", region_name="us-east-1")
 def check_imdsv1(instance):
     """Flag if IMDSv1 is enabled (http_tokens != 'required')"""
     metadata_options = instance.get("MetadataOptions", {})
-    if metadata_options.get("HttpTokens") != "required":
+    iam_role = instance.get("IamInstanceProfile", {})
+
+    if metadata_options.get("HttpTokens") != "required" and iam_role is None:
         return {
             "resource_type": "EC2",
             "resource_id": instance["InstanceId"],
