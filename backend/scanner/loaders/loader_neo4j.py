@@ -56,7 +56,7 @@ class Neo4jLoader:
         print(f"Loaded {len(instances)} EC2 instances into Neo4j")
     
     def create_findings(self):
-        """Run detection queries and create Finding nodes"""
+        # Run detection queries and create Finding nodes
         with self.driver.session() as session:
             # Finding: Public S3 buckets
             session.execute_write(self._detect_public_s3_buckets)
@@ -71,7 +71,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_s3_bucket(tx, bucket):
-        """Create or update S3 bucket node"""
+        # Create or update S3 bucket node
         query = """
         MERGE (b:S3Bucket {bucket_name: $bucket_name})
         SET b.arn = $arn,
@@ -101,7 +101,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_ec2_instance(tx, instance):
-        """Create or update EC2 instance node"""
+        # Create or update EC2 instance node
         query = """
         MERGE (e:EC2Instance {instance_id: $instance_id})
         SET e.instance_type = $instance_type,
@@ -129,7 +129,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_security_group(tx, sg):
-        """Create or update security group node"""
+        # Create or update security group node
         query = """
         MERGE (sg:SecurityGroup {group_id: $group_id})
         SET sg.group_name = $group_name,
@@ -149,7 +149,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_iam_role(tx, instance):
-        """Create or update IAM role node"""
+        # Create or update IAM role node
         query = """
         MERGE (r:IAMRole {role_name: $role_name})
         SET r.arn = $arn,
@@ -163,7 +163,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _link_ec2_to_sg(tx, instance_id, group_id):
-        """Create HAS_SECURITY_GROUP relationship"""
+        # Create HAS_SECURITY_GROUP relationship
         query = """
         MATCH (e:EC2Instance {instance_id: $instance_id})
         MATCH (sg:SecurityGroup {group_id: $group_id})
@@ -173,7 +173,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _link_ec2_to_role(tx, instance_id, role_name):
-        """Create HAS_ROLE relationship"""
+        # Create HAS_ROLE relationship
         query = """
         MATCH (e:EC2Instance {instance_id: $instance_id})
         MATCH (r:IAMRole {role_name: $role_name})
@@ -183,7 +183,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _detect_public_s3_buckets(tx):
-        """Detect and create findings for public S3 buckets"""
+        # Detect and create findings for public S3 buckets
         query = """
         MATCH (b:S3Bucket {is_public: true})
         MERGE (f:Finding {finding_id: 'PUBLIC_S3_' + b.bucket_name})
@@ -199,7 +199,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _detect_imdsv1_instances(tx):
-        """Detect and create findings for EC2 instances with IMDSv1 enabled"""
+        # Detect and create findings for EC2 instances with IMDSv1 enabled
         query = """
         MATCH (e:EC2Instance {imdsv1_enabled: true})
         MERGE (f:Finding {finding_id: 'IMDSV1_' + e.instance_id})
@@ -215,7 +215,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _detect_cloud_breach_s3(tx):
-        """Detect cloud_breach_s3 attack pattern: EC2 with IMDSv1 + IAM role with S3FullAccess"""
+        # Detect cloud_breach_s3 attack pattern: EC2 with IMDSv1 + IAM role with S3FullAccess
         query = """
         MATCH (e:EC2Instance {imdsv1_enabled: true})-[:HAS_ROLE]->(r:IAMRole)
         WHERE 'AmazonS3FullAccess' IN r.managed_policies
