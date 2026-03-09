@@ -51,7 +51,10 @@ CREATE CONSTRAINT finding_id_unique IF NOT EXISTS
 FOR (n:Finding) REQUIRE n.finding_id IS UNIQUE;
 
 
-// Test data - delete when using real AWS resources
+// Test data
+// Can delete when using real AWS resources
+// Follows same format expected from the finalized collection software
+
 // Public S3 bucket with exposed secrets
 MERGE (b:S3Bucket {bucket_name: "cspm-test-public-anjl"})
 ON CREATE SET
