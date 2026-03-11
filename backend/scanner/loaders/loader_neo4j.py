@@ -1,6 +1,4 @@
-"""
-Neo4j Data Loader for AWS resource data from collectors into graph database
-"""
+# Neo4j Data Loader for AWS resource data from collectors into graph database
 
 import json
 from neo4j import GraphDatabase
