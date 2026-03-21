@@ -3,6 +3,17 @@ CY4930 Capstone Project
 
 FastAPI Backend
 
+To start follow these steps:
+1. Activate the venv (if you use it):
+`cd /Users/silverfox/SCHOOL/AWS-Misconfiguration-Scanner/backend`
+`source .venv/bin/activate`
+
+2. Install deps (if needed):
+`pip install -r requirements.txt`
+
+3. Run the API:
+`uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
+
 React + Vite Frontend
 
 ## ⚖️ Acknowledgments & Third-Party Notices
