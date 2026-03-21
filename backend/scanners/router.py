@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 import boto3
 from app.config import Settings
-from scanners.collectors.collector_ec2 import run_scanner as run_ec2_scanner
+from scanners.collectors.collector_ec2 import EC2ScannerService
 from scanners.collectors.collector_s3 import run_scanner as run_s3_scanner
 
 router = APIRouter(
@@ -21,7 +21,7 @@ def get_client(service: str):
 
 @router.post("/ec2")
 def scan_ec2(client=Depends(get_client("ec2"))):
-    findings = run_ec2_scanner(client)
+    findings = EC2ScannerService(client).run_scanner()
     return {
         "resource": "EC2",
         "total_findings": len(findings),
