@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 import boto3
 from app.config import Settings
 from scanners.collectors.collector_ec2 import EC2ScannerService
-from scanners.collectors.collector_s3 import run_scanner as run_s3_scanner
+from scanners.collectors.collector_s3 import S3ScannerService
 
 router = APIRouter(
     prefix="/scanners",
@@ -30,14 +30,10 @@ def scan_ec2(client=Depends(get_client("ec2"))):
 
 @router.post("/s3")
 def scan_s3():
-    findings = run_s3_scanner(client=Depends(get_client("s3")))
+    findings = S3ScannerService(client=Depends(get_client("s3"))).run_scanner()
+  
     return {
-        "resource": "S3",
+        "resource": "EC2",
         "total_findings": len(findings),
         "findings": findings
     }
-
-# TODO: Add lambda scanner
-# @router.post("/lambda")
-# def scan_lambda():
-#     return {"message": "Lambda scan started"}
