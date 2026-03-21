@@ -7,12 +7,11 @@ class EC2ScannerService:
     def __init__(self, client):
         self.client = client  
 
-    def run_scanner(self, instance):
+    def run_scanner(self):
         print("Running detection engine...\n")
         start = datetime.now()
 
-        findings = []
-        findings.extend(self.scan_ec2(instance))
+        findings = self.scan_ec2()
 
         # Output the findings to a JSON file
         output = {
@@ -63,7 +62,7 @@ class EC2ScannerService:
                             }
         return None
 
-    def scan_ec2(self, instance):
+    def scan_ec2(self):
         findings = []
         response = self.client.describe_instances()
 
@@ -75,4 +74,4 @@ class EC2ScannerService:
                         findings.append(result)
 
         return findings
-
+ 
