@@ -11,19 +11,20 @@ class S3ScannerService:
         findings = []
         findings.extend(self.scan_s3())
 
-        output = {
-            "scan_timestamp": datetime.now().isoformat() + "Z",
-            "total_findings": len(findings),
-            "findings": findings
-        }
+        # output = {
+        #     "scan_timestamp": datetime.now().isoformat() + "Z",
+        #     "total_findings": len(findings),
+        #     "findings": findings
+        # }
 
-        print(json.dumps(output, indent=2))
+        # print(json.dumps(output, indent=2))
 
-        with open("findings.json", "w") as f:
-            json.dump(output, f, indent=2)
+        # with open("findings.json", "w") as f:
+        #     json.dump(output, f, indent=2)
 
-        print(f"\nScan complete. {len(findings)} finding(s) written to findings.json")
-        
+        # print(f"\nScan complete. {len(findings)} finding(s) written to findings.json")
+
+        return findings
 
     def check_public_access_block(self, bucket_name):
         """Flag if Block Public Access is not fully enabled

@@ -9,23 +9,26 @@ class EC2ScannerService:
 
     def run_scanner(self):
         print("Running detection engine...\n")
-        start = datetime.now()
+        # start = datetime.now()
 
-        findings = self.scan_ec2()
+        findings = []
+        findings.extend(self.scan_ec2())
 
         # Output the findings to a JSON file
-        output = {
-            "scan_timestamp": datetime.now().isoformat() + "Z",
-            "total_findings": len(findings),
-            "findings": findings
-        }
+        # output = {
+        #     "scan_timestamp": datetime.now().isoformat() + "Z",
+        #     "total_findings": len(findings),
+        #     "findings": findings
+        # }
 
-        print(json.dumps(output, indent=2))
+        # print(json.dumps(output, indent=2))
 
-        with open("findings.json", "w") as f:
-            json.dump(output, f, indent=2)
+        # with open("findings.json", "w") as f:
+        #     json.dump(output, f, indent=2)
 
-        print(f"\nScan complete in {datetime.now() - start}. {len(findings)} finding(s) written to findings.json")
+        # print(f"\nScan complete in {datetime.now() - start}. {len(findings)} finding(s) written to findings.json")
+
+        return findings
 
     # EC2 Detections
     def check_imdsv1(self, instance):
