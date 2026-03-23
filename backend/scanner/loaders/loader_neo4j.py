@@ -1,251 +1,220 @@
-# Neo4j Data Loader for AWS resource data from collectors into graph database
+#!/usr/bin/env python3
+"""
+Neo4j Data Loader - Loads nodes and relationships from collectors into Neo4j
+"""
 
 import json
+import os
 from neo4j import GraphDatabase
+from dotenv import load_dotenv
 
 
 class Neo4jLoader:
-    def __init__(self, uri="bolt://localhost:7687", user="neo4j", password="cspm-password-123"):
+    def __init__(self):
+        load_dotenv()
+        
+        uri = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+        user = os.getenv("NEO4J_USER")
+        password = os.getenv("NEO4J_PASSWORD")
+        
+        if not user or not password:
+            raise ValueError("NEO4J_USER and NEO4J_PASSWORD must be set in .env")
+        
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
+        print(f"Connected to Neo4j at {uri}")
     
     def close(self):
-        self.driver.close()
+        if self.driver:
+            self.driver.close()
     
-    def load_s3_data(self, json_file="data/s3_data.json"):
-        #Load S3 bucket data from collector JSON into Neo4j
+    def load_collector_output(self, json_file):
+        # Load nodes and relationships from collector JSON
+        print(f"\nLoading {json_file}...")
+        
         with open(json_file, 'r') as f:
-            buckets = json.load(f)
+            data = json.load(f)
         
-        with self.driver.session() as session:
-            for bucket in buckets:
-                session.execute_write(self._create_s3_bucket, bucket)
+        nodes = data.get("nodes", {})
+        relationships = data.get("relationships", [])
         
-        print(f"Loaded {len(buckets)} S3 buckets into Neo4j")
-    
-    def load_ec2_data(self, json_file="data/ec2_data.json"):
-        #Load EC2 instance data from collector JSON into Neo4j
-        with open(json_file, 'r') as f:
-            instances = json.load(f)
+        # Load nodes
+        for node_type, node_list in nodes.items():
+            if node_list:
+                print(f"  Creating {len(node_list)} {node_type} nodes...")
+                with self.driver.session() as session:
+                    for node in node_list:
+                        session.execute_write(self._create_node, node_type, node)
         
-        with self.driver.session() as session:
-            for instance in instances:
-                # Create EC2 instance node
-                session.execute_write(self._create_ec2_instance, instance)
-                
-                # Create security groups and relationships
-                if instance.get('security_groups'):
-                    for sg in instance['security_groups']:
-                        session.execute_write(self._create_security_group, sg)
-                        session.execute_write(
-                            self._link_ec2_to_sg, 
-                            instance['instance_id'], 
-                            sg['group_id']
-                        )
-                
-                # Create IAM role and relationship
-                if instance.get('iam_role_name'):
-                    session.execute_write(self._create_iam_role, instance)
-                    session.execute_write(
-                        self._link_ec2_to_role,
-                        instance['instance_id'],
-                        instance['iam_role_name']
-                    )
+        # Load relationships
+        if relationships:
+            print(f"  Creating {len(relationships)} relationships...")
+            with self.driver.session() as session:
+                for rel in relationships:
+                    session.execute_write(self._create_relationship, rel)
         
-        print(f"Loaded {len(instances)} EC2 instances into Neo4j")
+        print(f"Loaded {json_file}")
     
-    def create_findings(self):
-        # Run detection queries and create Finding nodes
-        with self.driver.session() as session:
-            # Finding: Public S3 buckets
-            session.execute_write(self._detect_public_s3_buckets)
-            
-            # Finding: EC2 with IMDSv1 enabled
-            session.execute_write(self._detect_imdsv1_instances)
-            
-            # Finding: Cloud breach S3 attack path
-            session.execute_write(self._detect_cloud_breach_s3)
+    @staticmethod
+    def _create_node(tx, node_type, node_data):
+        # Create or update node in Neo4j
         
-        print("Created findings based on detection queries")
+        if node_type == "EC2Instance":
+            query = """
+            MERGE (n:EC2Instance {instance_id: $instance_id})
+            SET n.instance_type = $instance_type,
+                n.region = $region,
+                n.public_ip = $public_ip,
+                n.private_ip = $private_ip,
+                n.imdsv1_enabled = $imdsv1_enabled,
+                n.has_public_ip = $has_public_ip
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "S3Bucket":
+            query = """
+            MERGE (n:S3Bucket {bucket_name: $bucket_name})
+            SET n.arn = $arn,
+                n.region = $region
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "S3Object":
+            query = """
+            MERGE (n:S3Object {object_key: $object_key, bucket_name: $bucket_name})
+            SET n.size = $size,
+                n.last_modified = $last_modified
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "SecurityGroup":
+            query = """
+            MERGE (n:SecurityGroup {group_id: $group_id})
+            SET n.group_name = $group_name,
+                n.description = $description
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "IAMRole":
+            query = """
+            MERGE (n:IAMRole {role_name: $role_name})
+            SET n.arn = $arn
+            """
+            # Handle optional role_id field
+            params = {k: v for k, v in node_data.items() if v is not None}
+            tx.run(query, **params)
+        
+        elif node_type == "IAMUser":
+            query = """
+            MERGE (n:IAMUser {username: $username})
+            SET n.arn = $arn,
+                n.user_id = $user_id
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "LambdaFunction":
+            query = """
+            MERGE (n:LambdaFunction {function_name: $function_name})
+            SET n.arn = $arn,
+                n.runtime = $runtime,
+                n.region = $region,
+                n.role = $role
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "Secret":
+            query = """
+            MERGE (n:Secret {location: $location})
+            SET n.type = $type,
+                n.pattern = $pattern,
+                n.exposure_level = $exposure_level
+            """
+            tx.run(query, **node_data)
+        
+        elif node_type == "Finding":
+            query = """
+            MERGE (n:Finding {finding_id: $finding_id})
+            SET n.type = $type,
+                n.severity = $severity,
+                n.description = $description,
+                n.remediation = $remediation,
+                n.cis_control = $cis_control,
+                n.owasp = $owasp
+            """
+            tx.run(query, **node_data)
     
     @staticmethod
-    def _create_s3_bucket(tx, bucket):
-        # Create or update S3 bucket node
-        query = """
-        MERGE (b:S3Bucket {bucket_name: $bucket_name})
-        SET b.arn = $arn,
-            b.region = $region,
-            b.is_public = $is_public,
-            b.acl = $acl,
-            b.encryption_enabled = $encryption_enabled,
-            b.versioning_enabled = $versioning_enabled,
-            b.block_public_access = $block_public_access,
-            b.risk_score = $risk_score,
-            b.severity = $severity,
-            b.tags = $tags
+    def _create_relationship(tx, rel_data):
+        # Create relationship between nodes
+        rel_type = rel_data["type"]
+        from_type = rel_data["from_type"]
+        from_id = rel_data["from_id"]
+        to_type = rel_data["to_type"]
+        to_id = rel_data["to_id"]
+        
+        # Node type to ID property mapping
+        id_map = {
+            "EC2Instance": "instance_id",
+            "S3Bucket": "bucket_name",
+            "S3Object": "object_key",
+            "SecurityGroup": "group_id",
+            "IAMRole": "role_name",
+            "IAMUser": "username",
+            "LambdaFunction": "function_name",
+            "Secret": "location",
+            "Finding": "finding_id"
+        }
+        
+        from_prop = id_map.get(from_type, "id")
+        to_prop = id_map.get(to_type, "id")
+        
+        query = f"""
+        MATCH (from:{from_type} {{{from_prop}: $from_id}})
+        MATCH (to:{to_type} {{{to_prop}: $to_id}})
+        MERGE (from)-[r:{rel_type}]->(to)
         """
-        tx.run(query, 
-            bucket_name=bucket['bucket_name'],
-            arn=bucket.get('arn', ''),
-            region=bucket.get('region', 'us-east-1'),
-            is_public=bucket.get('is_public', False),
-            acl=bucket.get('acl', 'private'),
-            encryption_enabled=bucket.get('encryption_enabled', False),
-            versioning_enabled=bucket.get('versioning_enabled', False),
-            block_public_access=bucket.get('block_public_access', {}).get('BlockPublicAcls', False),
-            risk_score=bucket.get('risk_score', 0),
-            severity=bucket.get('severity', 'LOW'),
-            tags=json.dumps(bucket.get('tags', {}))
-        )
-    
-    @staticmethod
-    def _create_ec2_instance(tx, instance):
-        # Create or update EC2 instance node
-        query = """
-        MERGE (e:EC2Instance {instance_id: $instance_id})
-        SET e.instance_type = $instance_type,
-            e.region = $region,
-            e.public_ip = $public_ip,
-            e.private_ip = $private_ip,
-            e.imdsv1_enabled = $imdsv1_enabled,
-            e.has_public_ip = $has_public_ip,
-            e.risk_score = $risk_score,
-            e.severity = $severity,
-            e.state = $state
-        """
-        tx.run(query,
-            instance_id=instance['instance_id'],
-            instance_type=instance.get('instance_type', 't2.micro'),
-            region=instance.get('region', 'us-east-1'),
-            public_ip=instance.get('public_ip'),
-            private_ip=instance.get('private_ip'),
-            imdsv1_enabled=instance.get('imdsv1_enabled', False),
-            has_public_ip=instance.get('has_public_ip', False),
-            risk_score=instance.get('risk_score', 0),
-            severity=instance.get('severity', 'LOW'),
-            state=instance.get('state', 'unknown')
-        )
-    
-    @staticmethod
-    def _create_security_group(tx, sg):
-        # Create or update security group node
-        query = """
-        MERGE (sg:SecurityGroup {group_id: $group_id})
-        SET sg.group_name = $group_name,
-            sg.description = $description,
-            sg.vpc_id = $vpc_id,
-            sg.open_ssh = $open_ssh,
-            sg.open_rdp = $open_rdp
-        """
-        tx.run(query,
-            group_id=sg['group_id'],
-            group_name=sg.get('group_name', ''),
-            description=sg.get('description', ''),
-            vpc_id=sg.get('vpc_id', ''),
-            open_ssh=sg.get('has_open_ssh', False),
-            open_rdp=sg.get('has_open_rdp', False)
-        )
-    
-    @staticmethod
-    def _create_iam_role(tx, instance):
-        # Create or update IAM role node
-        query = """
-        MERGE (r:IAMRole {role_name: $role_name})
-        SET r.arn = $arn,
-            r.managed_policies = $managed_policies
-        """
-        tx.run(query,
-            role_name=instance['iam_role_name'],
-            arn=instance.get('iam_role_arn', ''),
-            managed_policies=instance.get('managed_policies', [])
-        )
-    
-    @staticmethod
-    def _link_ec2_to_sg(tx, instance_id, group_id):
-        # Create HAS_SECURITY_GROUP relationship
-        query = """
-        MATCH (e:EC2Instance {instance_id: $instance_id})
-        MATCH (sg:SecurityGroup {group_id: $group_id})
-        MERGE (e)-[:HAS_SECURITY_GROUP]->(sg)
-        """
-        tx.run(query, instance_id=instance_id, group_id=group_id)
-    
-    @staticmethod
-    def _link_ec2_to_role(tx, instance_id, role_name):
-        # Create HAS_ROLE relationship
-        query = """
-        MATCH (e:EC2Instance {instance_id: $instance_id})
-        MATCH (r:IAMRole {role_name: $role_name})
-        MERGE (e)-[:HAS_ROLE]->(r)
-        """
-        tx.run(query, instance_id=instance_id, role_name=role_name)
-    
-    @staticmethod
-    def _detect_public_s3_buckets(tx):
-        # Detect and create findings for public S3 buckets
-        query = """
-        MATCH (b:S3Bucket {is_public: true})
-        MERGE (f:Finding {finding_id: 'PUBLIC_S3_' + b.bucket_name})
-        SET f.type = 'PUBLIC_S3_BUCKET',
-            f.severity = 'CRITICAL',
-            f.cis_control = '2.1.5',
-            f.owasp = 'A01:2021',
-            f.description = 'S3 bucket ' + b.bucket_name + ' is publicly accessible',
-            f.remediation = 'Enable Block Public Access settings on the bucket'
-        MERGE (b)-[:HAS_FINDING]->(f)
-        """
-        tx.run(query)
-    
-    @staticmethod
-    def _detect_imdsv1_instances(tx):
-        # Detect and create findings for EC2 instances with IMDSv1 enabled
-        query = """
-        MATCH (e:EC2Instance {imdsv1_enabled: true})
-        MERGE (f:Finding {finding_id: 'IMDSV1_' + e.instance_id})
-        SET f.type = 'EC2_IMDSV1_ENABLED',
-            f.severity = 'HIGH',
-            f.cis_control = '5.6',
-            f.owasp = 'A05:2021',
-            f.description = 'EC2 instance ' + e.instance_id + ' has IMDSv1 enabled, vulnerable to SSRF attacks',
-            f.remediation = 'Enable IMDSv2 by setting http_tokens = required in metadata_options'
-        MERGE (e)-[:HAS_FINDING]->(f)
-        """
-        tx.run(query)
-    
-    @staticmethod
-    def _detect_cloud_breach_s3(tx):
-        # Detect cloud_breach_s3 attack pattern: EC2 with IMDSv1 + IAM role with S3FullAccess
-        query = """
-        MATCH (e:EC2Instance {imdsv1_enabled: true})-[:HAS_ROLE]->(r:IAMRole)
-        WHERE 'AmazonS3FullAccess' IN r.managed_policies
-        MERGE (f:Finding {finding_id: 'CLOUD_BREACH_S3_' + e.instance_id})
-        SET f.type = 'CLOUD_BREACH_S3_PATTERN',
-            f.severity = 'CRITICAL',
-            f.cis_control = '5.6, 1.16',
-            f.owasp = 'A05:2021',
-            f.description = 'CRITICAL: EC2 instance ' + e.instance_id + ' has IMDSv1 enabled AND overly permissive IAM role with S3FullAccess. This is the cloud_breach_s3 attack pattern.',
-            f.remediation = '1) Enable IMDSv2, 2) Replace S3FullAccess with least-privilege policy'
-        MERGE (e)-[:HAS_FINDING]->(f)
-        """
-        tx.run(query)
+        
+        tx.run(query, from_id=from_id, to_id=to_id)
 
 
 def main():
     loader = Neo4jLoader()
+    
     try:
-        print("Starting data load into Neo4j...")
+        print("\n" + "=" * 60)
+        print("CSPM Scanner - Neo4j Data Loader")
+        print("=" * 60)
         
-        # Load S3 data
-        loader.load_s3_data("data/s3_data.json")
+        # Collector output files
+        files = [
+            "findings_ec2.json",
+            "findings_s3.json",
+            "findings_iam.json",
+            "findings_lambda.json"
+        ]
         
-        # Load EC2 data
-        loader.load_ec2_data("data/ec2_data.json")
+        loaded = 0
+        for filename in files:
+            if os.path.exists(filename):
+                loader.load_collector_output(filename)
+                loaded += 1
+            else:
+                print(f"Skipping {filename} (not found)")
         
-        # Run detection queries and create findings
-        loader.create_findings()
-        
-        print("\nData load complete")
-        print("Access Neo4j Browser at http://localhost:7474")
-        print("Run this query to view graph: MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50")
+        if loaded == 0:
+            print("\nNo collector outputs found!")
+            print("\nRun collectors first:")
+            print("  python collector_ec2.py")
+            print("  python collector_s3.py")
+            print("  python collector_iam.py")
+            print("  python collector_lambda.py")
+        else:
+            print("\n" + "=" * 60)
+            print(f"Successfully loaded {loaded} files into Neo4j")
+            print("=" * 60)
+            print("\nView your data:")
+            print("  1. Open: http://localhost:7474")
+            print("  2. Login: neo4j / cspm-password-123")
+            print("  3. Query: MATCH (n)-[r]->(m) RETURN n, r, m LIMIT 50")
         
     finally:
         loader.close()

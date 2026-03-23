@@ -7,6 +7,7 @@ from datetime import datetime
 
 from utils import contains_credentials, make_finding, CREDENTIAL_PATTERNS
 
+SCANNABLE_EXTENSIONS = ('.txt', '.env', '.json', '.yaml', '.yml', '.config', '.ini', '.properties', '.py', '.js', '.sh', '.md')
 s3_client = boto3.client("s3")
 
 
