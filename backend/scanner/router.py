@@ -3,7 +3,6 @@ from datetime import datetime
 import boto3
 from fastapi import APIRouter, Depends
 
-from app.config import settings
 from scanner.collectors.collector_ec2 import EC2ScannerService
 from scanner.collectors.collector_s3 import S3ScannerService
 from scanner.collectors.collector_lambda import LambdaScannerService
@@ -15,13 +14,9 @@ router = APIRouter(
     tags=["scanner"],
 )
 
-
 def _boto_client(service_name: str):
     return boto3.client(
-        service_name,
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_REGION,
+        service_name
     )
 
 
