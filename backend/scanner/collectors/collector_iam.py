@@ -180,8 +180,4 @@ class IAMScannerService:
 
     def run_scanner(self):
         nodes, relationships = self.scan_iam()
-        return nodes["Finding"]# , relationships
-
-
-# if __name__ == "__main__":
-#     IAMScannerService(boto3.client("iam", region_name="us-east-1")).run_scanner()
+        return nodes["Finding"], relationships

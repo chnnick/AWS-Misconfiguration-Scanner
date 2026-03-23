@@ -151,4 +151,4 @@ class S3ScannerService:
     def run_scanner(self):
         nodes, relationships = self.scan_s3()
 
-        return nodes["Finding"]# , relationships
+        return nodes["Finding"], relationships

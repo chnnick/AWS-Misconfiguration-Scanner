@@ -37,7 +37,7 @@ def get_lambda_client():
 def get_iam_client():
     return _boto_client("iam")
 
-def _scan_response(resource: str, start: datetime, findings: list) -> ScanResponse:
+def _scan_response(resource: str, start: datetime, findings: list, relationships: list) -> ScanResponse:
     end = datetime.now()
     return ScanResponse(
         scan_start=start.isoformat() + "Z",
@@ -45,31 +45,32 @@ def _scan_response(resource: str, start: datetime, findings: list) -> ScanRespon
         resource=resource,
         total_findings=len(findings),
         findings=findings,
+        relationships=relationships,
     )
 
 
 @router.post("/ec2", response_model=ScanResponse)
 def scan_ec2(client=Depends(get_ec2_client)):
     start = datetime.now()
-    findings = EC2ScannerService(client).run_scanner()
-    return _scan_response("EC2", start, findings)
+    findings, relationships = EC2ScannerService(client).run_scanner()
+    return _scan_response("EC2", start, findings, relationships)
 
 
 @router.post("/s3", response_model=ScanResponse)
 def scan_s3(client=Depends(get_s3_client)):
     start = datetime.now()
-    findings = S3ScannerService(client).run_scanner()
-    return _scan_response("S3", start, findings)
+    findings, relationships = S3ScannerService(client).run_scanner()
+    return _scan_response("S3", start, findings, relationships)
 
 
 @router.post("/lambda", response_model=ScanResponse)
 def scan_lambda(client=Depends(get_lambda_client)):
     start = datetime.now()
-    findings = LambdaScannerService(client).run_scanner()
-    return _scan_response("Lambda", start, findings)
+    findings, relationships = LambdaScannerService(client).run_scanner()
+    return _scan_response("Lambda", start, findings, relationships)
 
 @router.post("/iam", response_model=ScanResponse)
 def scan_iam(client=Depends(get_iam_client)):
     start = datetime.now()
-    findings = IAMScannerService(client).run_scanner()
-    return _scan_response("IAM", start, findings)
+    findings, relationships = IAMScannerService(client).run_scanner()
+    return _scan_response("IAM", start, findings, relationships)

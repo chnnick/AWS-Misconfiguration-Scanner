@@ -110,4 +110,4 @@ class EC2ScannerService:
 
     def run_scanner(self):
         nodes, relationships = self.scan_ec2()
-        return nodes["Finding"]# , relationships
+        return nodes["Finding"], relationships

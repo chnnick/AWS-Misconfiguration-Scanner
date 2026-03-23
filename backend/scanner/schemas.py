@@ -24,3 +24,7 @@ class ScanResponse(BaseModel):
         default_factory=list,
         description="Flat list of finding objects from the collector.",
     )
+    relationships: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="List of relationships between findings.",
+    )

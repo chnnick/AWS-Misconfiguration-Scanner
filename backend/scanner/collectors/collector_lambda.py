@@ -92,7 +92,7 @@ class LambdaScannerService:
 
     def run_scanner(self):
         nodes, relationships = self.scan_lambda()
-        return nodes["Finding"]# , relationships
+        return nodes["Finding"], relationships
 
 
 # if __name__ == "__main__":
