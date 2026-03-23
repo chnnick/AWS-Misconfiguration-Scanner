@@ -3,7 +3,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from scanners.router import router as scanners_router
+from scanner.router import router as scanners_router
 
 from app.config import require_aws_env
 
@@ -16,7 +16,9 @@ async def lifespan(app: FastAPI):
     host = os.environ.get("API_HOST", "127.0.0.1")
     base = f"http://{host}:{port}"
     log.info(
-        "CloudCheck API — %s  |  docs: %s/docs  |  health: %s/api/health  |  scanners: POST %s/api/scanners/ec2, POST %s/api/scanners/s3",
+        "\nCloudCheck API — %s\ndocs: %s/docs\nhealth: %s/api/health\nscanners:\n\tPOST %s/api/scanner/ec2\n\tPOST %s/api/scanner/s3\n\tPOST %s/api/scanner/lambda\n\tPOST %s/api/scanner/iam",
+        base,
+        base,
         base,
         base,
         base,
@@ -32,7 +34,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(scanners_router, prefix="/api", tags=["scanners"])
+app.include_router(scanners_router, prefix="/api", tags=["scanner"])
 
 @app.get("/api/health")
 def health():

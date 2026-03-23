@@ -1,6 +1,3 @@
-import json
-from datetime import datetime
-
 class S3ScannerService:
     def __init__(self, client):
         self.client = client
