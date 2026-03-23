@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 from scanner.collectors.utils import contains_credentials, make_finding
 
-SCANNABLE_EXTENSIONS = (".py", ".js", ".env", ".json", ".yaml", ".yml", ".txt")
-
+SCANNABLE_EXTENSIONS = ('.txt', '.env', '.json', '.yaml', '.yml', '.config', '.ini', '.properties', '.py', '.js', '.sh', '.md')
 
 class S3ScannerService:
     def __init__(self, client):
