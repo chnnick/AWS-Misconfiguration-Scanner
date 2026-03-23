@@ -89,3 +89,7 @@ neo4j/import/
 # Docker
 docker-compose.override.yml
 docker-compose.dev.yml 
+
+# Scanner data - Will be AWS data, can add specified names when file generation confirmed
+backend/scanner/data/
+backend/scanner/data/*.json
