@@ -91,24 +91,7 @@ class LambdaScannerService:
         return nodes, relationships
 
     def run_scanner(self):
-        # print("Running Lambda detection engine...\n")
-        # start = datetime.now()
-
         nodes, relationships = self.scan_lambda()
-
-        # output = {
-        #     "scan_timestamp": datetime.now().isoformat() + "Z",
-        #     "nodes": nodes,
-        #     "relationships": relationships
-        # }
-
-        # # print(json.dumps(output, indent=2))
-
-        # # with open("findings_lambda.json", "w") as f:
-        # #     json.dump(output, f, indent=2)
-
-        # # print(f"\nScan complete in {datetime.now() - start}. {len(nodes['Finding'])} finding(s) written to findings_lambda.json")
-
         return nodes["Finding"]# , relationships
 
 
