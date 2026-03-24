@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import boto3
-import json
 from datetime import datetime
 
 from scanner.collectors.utils import make_finding

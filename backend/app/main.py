@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
     host = os.environ.get("API_HOST", "127.0.0.1")
     base = f"http://{host}:{port}"
     log.info(
-        "\nCloudCheck API — %s\ndocs: %s/docs\nhealth: %s/api/health\nscanners:\n\tPOST %s/api/scanner/ec2\n\tPOST %s/api/scanner/s3\n\tPOST %s/api/scanner/lambda\n\tPOST %s/api/scanner/iam",
+        "\nCloudSight API — %s\ndocs: %s/docs\nhealth: %s/api/health\nscanners:\n\tPOST %s/api/scanner/ec2\n\tPOST %s/api/scanner/s3\n\tPOST %s/api/scanner/lambda\n\tPOST %s/api/scanner/iam",
         base,
         base,
         base,
@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="CloudCheck API",
+    title="CloudSight API",
     version="1.0.0",
     lifespan=lifespan,
 )

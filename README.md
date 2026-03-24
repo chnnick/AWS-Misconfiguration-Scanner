@@ -6,6 +6,7 @@ FastAPI Backend
 To start follow these steps:
 1. Activate the venv (if you use it):
 `cd /Users/silverfox/SCHOOL/AWS-Misconfiguration-Scanner/backend`
+ENSURE YOU HAVE A VIRTUAL ENVIRONMENT (Example .venv)
 `source .venv/bin/activate`
 
 2. Install deps (if needed):
