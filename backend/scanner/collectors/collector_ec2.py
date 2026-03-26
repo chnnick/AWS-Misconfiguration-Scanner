@@ -119,7 +119,7 @@ class EC2ScannerService:
             "relationships": relationships
         }
 
-        with open("findings_ec2.json", "w") as f:
+        with open("/data/findings_ec2.json", "w") as f:
             json.dump(output, f, indent=2)
             
         return output

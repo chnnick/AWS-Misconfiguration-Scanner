@@ -99,7 +99,7 @@ class LambdaScannerService:
             "relationships": relationships
         }
 
-        with open("findings_lambda.json", "w") as f:
+        with open("/data/findings_lambda.json", "w") as f:
             json.dump(output, f, indent=2)
 
         return output
