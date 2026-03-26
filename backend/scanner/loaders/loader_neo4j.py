@@ -7,8 +7,8 @@ import json
 import os
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
-
-
+ 
+ 
 class Neo4jLoader:
     def __init__(self):
         load_dotenv()
@@ -26,6 +26,31 @@ class Neo4jLoader:
     def close(self):
         if self.driver:
             self.driver.close()
+    
+    def ensure_schema_exists(self):
+        # Create indexes and constraints if they don't exist
+        print("\nEnsuring schema exists...")
+        
+        with self.driver.session() as session:
+            # Indexes for fast lookups
+            session.run("CREATE INDEX s3_bucket_name IF NOT EXISTS FOR (n:S3Bucket) ON (n.bucket_name)")
+            session.run("CREATE INDEX s3_bucket_region IF NOT EXISTS FOR (n:S3Bucket) ON (n.region)")
+            session.run("CREATE INDEX ec2_instance_id IF NOT EXISTS FOR (n:EC2Instance) ON (n.instance_id)")
+            session.run("CREATE INDEX ec2_instance_region IF NOT EXISTS FOR (n:EC2Instance) ON (n.region)")
+            session.run("CREATE INDEX security_group_id IF NOT EXISTS FOR (n:SecurityGroup) ON (n.group_id)")
+            session.run("CREATE INDEX secret_type IF NOT EXISTS FOR (n:Secret) ON (n.type)")
+            session.run("CREATE INDEX secret_location IF NOT EXISTS FOR (n:Secret) ON (n.location)")
+            session.run("CREATE INDEX finding_severity IF NOT EXISTS FOR (n:Finding) ON (n.severity)")
+            session.run("CREATE INDEX finding_type IF NOT EXISTS FOR (n:Finding) ON (n.type)")
+            
+            # Unique constraints
+            session.run("CREATE CONSTRAINT s3_bucket_unique IF NOT EXISTS FOR (n:S3Bucket) REQUIRE n.bucket_name IS UNIQUE")
+            session.run("CREATE CONSTRAINT ec2_instance_unique IF NOT EXISTS FOR (n:EC2Instance) REQUIRE n.instance_id IS UNIQUE")
+            session.run("CREATE CONSTRAINT security_group_unique IF NOT EXISTS FOR (n:SecurityGroup) REQUIRE n.group_id IS UNIQUE")
+            session.run("CREATE CONSTRAINT secret_location_unique IF NOT EXISTS FOR (n:Secret) REQUIRE n.location IS UNIQUE")
+            session.run("CREATE CONSTRAINT finding_id_unique IF NOT EXISTS FOR (n:Finding) REQUIRE n.finding_id IS UNIQUE")
+        
+        print("Schema validated")
     
     def load_collector_output(self, json_file):
         # Load nodes and relationships from collector JSON
@@ -56,7 +81,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_node(tx, node_type, node_data):
-        # Create or update node in Neo4j
+        """Create or update node in Neo4j"""
         
         if node_type == "EC2Instance":
             query = """
@@ -144,7 +169,7 @@ class Neo4jLoader:
     
     @staticmethod
     def _create_relationship(tx, rel_data):
-        # Create relationship between nodes
+        """Create relationship between nodes"""
         rel_type = rel_data["type"]
         from_type = rel_data["from_type"]
         from_id = rel_data["from_id"]
@@ -174,8 +199,8 @@ class Neo4jLoader:
         """
         
         tx.run(query, from_id=from_id, to_id=to_id)
-
-
+ 
+ 
 def main():
     loader = Neo4jLoader()
     
@@ -183,6 +208,9 @@ def main():
         print("\n" + "=" * 60)
         print("CSPM Scanner - Neo4j Data Loader")
         print("=" * 60)
+        
+        # Ensure schema exists (idempotent - safe to run multiple times)
+        loader.ensure_schema_exists()
         
         # Collector output files
         files = [
@@ -218,7 +246,7 @@ def main():
         
     finally:
         loader.close()
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
