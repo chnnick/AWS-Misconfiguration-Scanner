@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 from scanner.collectors.utils import contains_credentials, make_finding
+import json
+from datetime import datetime
 
 SCANNABLE_EXTENSIONS = ('.txt', '.env', '.json', '.yaml', '.yml', '.config', '.ini', '.properties', '.py', '.js', '.sh', '.md')
 
@@ -150,4 +152,13 @@ class S3ScannerService:
     def run_scanner(self):
         nodes, relationships = self.scan_s3()
 
-        return nodes["Finding"], relationships
+        output = {
+            "scan_timestamp": datetime.now().isoformat() + "Z",
+            "nodes": nodes,
+            "relationships": relationships
+        }
+
+        with open("findings_iam.json", "w") as f:
+            json.dump(output, f, indent=2)
+
+        return output

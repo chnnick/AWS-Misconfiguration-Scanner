@@ -47,25 +47,33 @@ def _scan_response(resource: str, start: datetime, findings: list, relationships
 @router.post("/ec2", response_model=ScanResponse)
 def scan_ec2(client=Depends(get_ec2_client)):
     start = datetime.now()
-    findings, relationships = EC2ScannerService(client).run_scanner()
+    output = EC2ScannerService(client).run_scanner()
+    findings = output["nodes"]["Finding"]
+    relationships = output["relationships"]
     return _scan_response("EC2", start, findings, relationships)
 
 
 @router.post("/s3", response_model=ScanResponse)
 def scan_s3(client=Depends(get_s3_client)):
     start = datetime.now()
-    findings, relationships = S3ScannerService(client).run_scanner()
+    output = S3ScannerService(client).run_scanner()
+    findings = output["nodes"]["Finding"]
+    relationships = output["relationships"]
     return _scan_response("S3", start, findings, relationships)
 
 
 @router.post("/lambda", response_model=ScanResponse)
 def scan_lambda(client=Depends(get_lambda_client)):
     start = datetime.now()
-    findings, relationships = LambdaScannerService(client).run_scanner()
+    output = LambdaScannerService(client).run_scanner()
+    findings = output["nodes"]["Finding"]
+    relationships = output["relationships"]
     return _scan_response("Lambda", start, findings, relationships)
 
 @router.post("/iam", response_model=ScanResponse)
 def scan_iam(client=Depends(get_iam_client)):
     start = datetime.now()
-    findings, relationships = IAMScannerService(client).run_scanner()
+    output = IAMScannerService(client).run_scanner()
+    findings = output["nodes"]["Finding"]
+    relationships = output["relationships"]
     return _scan_response("IAM", start, findings, relationships)

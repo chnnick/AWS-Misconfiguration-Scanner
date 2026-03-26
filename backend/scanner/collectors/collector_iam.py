@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from datetime import datetime
+import json
 
 from scanner.collectors.utils import make_finding
 
@@ -178,4 +179,14 @@ class IAMScannerService:
 
     def run_scanner(self):
         nodes, relationships = self.scan_iam()
-        return nodes["Finding"], relationships
+
+        output = {
+            "scan_timestamp": datetime.now().isoformat() + "Z",
+            "nodes": nodes,
+            "relationships": relationships
+        }
+
+        with open("findings_iam.json", "w") as f:
+            json.dump(output, f, indent=2)
+        
+        return output
