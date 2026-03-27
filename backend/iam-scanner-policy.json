@@ -1,0 +1,65 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "EC2ReadForScanner",
+        "Effect": "Allow",
+        "Action": [
+          "ec2:DescribeInstances",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeRegions"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "S3ListBuckets",
+        "Effect": "Allow",
+        "Action": [
+          "s3:ListAllMyBuckets"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "S3BucketReadForScanner",
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetBucketLocation",
+          "s3:GetBucketPolicy",
+          "s3:GetBucketPublicAccessBlock",
+          "s3:ListBucket",
+          "s3:GetBucketAcl",
+          "s3:GetBucketEncryption",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketLogging",
+          "s3:GetBucketTagging"
+        ],
+        "Resource": "arn:aws:s3:::*"
+      },
+      {
+        "Sid": "LambdaReadForScanner",
+        "Effect": "Allow",
+        "Action": [
+          "lambda:ListFunctions",
+          "lambda:GetFunction"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "IAMReadForCollector",
+        "Effect": "Allow",
+        "Action": [
+          "iam:ListUsers",
+          "iam:ListRoles",
+          "iam:ListUserPolicies",
+          "iam:GetUserPolicy",
+          "iam:ListRolePolicies",
+          "iam:GetRolePolicy",
+          "iam:ListAttachedUserPolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion"
+        ],
+        "Resource": "*"
+      }
+    ]
+  }
