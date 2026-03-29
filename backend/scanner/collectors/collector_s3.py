@@ -158,7 +158,7 @@ class S3ScannerService:
             "relationships": relationships
         }
 
-        with open("/data/findings_iam.json", "w") as f:
+        with open("/data/findings_s3.json", "w") as f:
             json.dump(output, f, indent=2)
 
         return output
