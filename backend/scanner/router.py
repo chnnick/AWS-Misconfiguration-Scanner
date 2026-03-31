@@ -34,10 +34,9 @@ def get_iam_client():
 
 
 def _auto_load_to_neo4j(json_file: str):
-    """Auto-load collector output into Neo4j"""
+    # Auto-load collector output into Neo4j
     try:
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'loaders'))
-        from loader_neo4j import Neo4jLoader
+        from backend.scanner.loaders.loader_neo4j import Neo4jLoader
         
         if not os.path.exists(json_file):
             print(f"Warning: {json_file} not found")
@@ -55,7 +54,7 @@ def _auto_load_to_neo4j(json_file: str):
 
 
 def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse:
-    """Build scan response and auto-load into Neo4j"""
+    # Build scan response and auto-load into Neo4j
     end = datetime.now()
     findings = output["nodes"]["Finding"]
     relationships = output["relationships"]
@@ -72,7 +71,7 @@ def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse
 
 @router.post("/ec2", response_model=ScanResponse)
 def scan_ec2(client=Depends(get_ec2_client)):
-    """Scan EC2 instances and auto-load into Neo4j"""
+    # Scan EC2 instances and auto-load into Neo4j
     start = datetime.now()
     output = EC2ScannerService(client).run_scanner()
     
@@ -84,7 +83,7 @@ def scan_ec2(client=Depends(get_ec2_client)):
 
 @router.post("/s3", response_model=ScanResponse)
 def scan_s3(client=Depends(get_s3_client)):
-    """Scan S3 buckets and auto-load into Neo4j"""
+    # Scan S3 buckets and auto-load into Neo4j
     start = datetime.now()
     output = S3ScannerService(client).run_scanner()
     
@@ -96,7 +95,7 @@ def scan_s3(client=Depends(get_s3_client)):
 
 @router.post("/lambda", response_model=ScanResponse)
 def scan_lambda(client=Depends(get_lambda_client)):
-    """Scan Lambda functions and auto-load into Neo4j"""
+    # Scan Lambda functions and auto-load into Neo4j
     start = datetime.now()
     output = LambdaScannerService(client).run_scanner()
     
@@ -108,7 +107,7 @@ def scan_lambda(client=Depends(get_lambda_client)):
 
 @router.post("/iam", response_model=ScanResponse)
 def scan_iam(client=Depends(get_iam_client)):
-    """Scan IAM resources and auto-load into Neo4j"""
+    # Scan IAM resources and auto-load into Neo4j
     start = datetime.now()
     output = IAMScannerService(client).run_scanner()
     
@@ -125,7 +124,7 @@ def scan_all(
     lambda_client=Depends(get_lambda_client),
     iam_client=Depends(get_iam_client)
 ):
-    """Scan all resources and auto-load into Neo4j"""
+    # Scan all resources and auto-load into Neo4j
     start = datetime.now()
     
     results = {
