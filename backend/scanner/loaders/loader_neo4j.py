@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Neo4j Data Loader - Loads nodes and relationships from collectors into Neo4j
+Neo4j Data Loader: Loads nodes and relationships from collectors into Neo4j
 """
 
 import json
