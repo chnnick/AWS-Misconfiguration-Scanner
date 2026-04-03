@@ -1,4 +1,4 @@
-# AWS Cloud Misconfiguration & Risk Scanner
+# CloudWatch Backend
 
 A graph-based cloud security analysis tool that ingests AWS infrastructure data, detects misconfigurations, and visualizes attack paths across resources.
 
@@ -34,7 +34,7 @@ source venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
-pip install boto3
+pip3 install -r requirements.txt
 ```
 
 ### 4. Configure AWS Credentials
@@ -103,55 +103,85 @@ terraform destroy
 
 > ⚠️ This environment is intentionally vulnerable and publicly exposed. Do not leave it running longer than needed.
 
+### 5. Add Neo4J Environment Variables
+Required in `.env` (change password field as wanted):
+```env
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=password123
+```
+
+6. Run the API:
+`uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
+Should See: 
+```
+CloudSight API — http://127.0.0.1:8000
+docs: http://127.0.0.1:8000/docs
+health: http://127.0.0.1:8000/api/health
+scanners:
+        POST http://127.0.0.1:8000/api/scanner/ec2
+        POST http://127.0.0.1:8000/api/scanner/s3
+        POST http://127.0.0.1:8000/api/scanner/lambda
+        POST http://127.0.0.1:8000/api/scanner/iam
+```
+
+## Workflow
+
+### 1. User triggers scan from frontend
+```
+User clicks "Scan EC2" button
+  ↓
+Frontend: POST /api/scanner/ec2
+  ↓
+Backend: Runs EC2ScannerService
+  ↓
+Backend: Saves /data/findings_ec2.json
+  ↓
+Backend: Auto-loads into Neo4j (schema + data)
+  ↓
+Backend: Returns scan results to frontend
+```
+
+### 2. User views findings
+```
+Frontend: GET /api/findings
+  ↓
+Backend: Queries Neo4j
+  ↓
+Backend: Returns findings array
+  ↓
+Frontend: Displays findings to user
+```
+
 ---
 
-## Running the Scanner
+## Testing the API
 
-Run each collector independently from the project root:
+### Using curl:
 
 ```bash
-# Scan EC2 resources
-python3 scanner/collectors/collector_ec2.py
+# Trigger EC2 scan
+curl -X POST http://localhost:8000/api/scanner/ec2
 
-# Scan S3 resources
-python3 scanner/collectors/collector_s3.py
+# Get all findings
+curl http://localhost:8000/api/findings
+
+# Get critical findings
+curl "http://localhost:8000/api/findings?severity=CRITICAL"
+
+# Get statistics
+curl http://localhost:8000/api/stats
+
+# Get graph data
+curl "http://localhost:8000/api/graph?limit=50"
+
+# Health check
+curl http://localhost:8000/api/health
 ```
 
-Each collector outputs a `findings.json` file in the directory it is run from.
+### Using Swagger UI:
 
----
+Open: http://localhost:8000/docs
 
-## Expected Findings (cloud_breach_s3)
+Interactive API documentation with "Try it out" buttons for all endpoints.
 
-| # | Collector | Resource | Check | Expected |
-|---|---|---|---|---|
-| 1 | EC2 | `ec2-vulnerable-proxy-server` | IMDSv1 Enabled | FAIL |
-| 2 | S3 | `cg-cardholder-data-bucket-demo` | No Bucket Policy | FAIL |
-
-### Notes
-
-- **Open SSH** — passes because the security group restricts port 22 to `cg_whitelist` (your IP), not `0.0.0.0/0`.
-- **Encryption at Rest** — passes because AWS enforces SSE-S3 by default on all new buckets (since January 2023). CloudGoat does not explicitly disable it.
-- **Block Public Access** — passes because AWS enables BPA by default at the account level on newer accounts.
-
----
-
-## Output Format
-
-Each collector produces a JSON findings report:
-
-```json
-{
-  "scan_timestamp": "2026-03-06T17:44:37.950138Z",
-  "total_findings": 1,
-  "findings": [
-    {
-      "resource_type": "S3",
-      "resource_id": "cg-cardholder-data-bucket-demo",
-      "check": "No Bucket Policy",
-      "detail": "Bucket has no resource-based policy. Access controlled by IAM only.",
-      "status": "FAIL"
-    }
-  ]
-}
-```
