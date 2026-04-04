@@ -1,10 +1,10 @@
 from datetime import datetime
 import os
-import sys
 
 import boto3
 from fastapi import APIRouter, Depends
 
+from scanner.collectors.utils import get_findings_path
 from scanner.collectors.collector_ec2 import EC2ScannerService
 from scanner.collectors.collector_s3 import S3ScannerService
 from scanner.collectors.collector_lambda import LambdaScannerService
@@ -12,7 +12,7 @@ from scanner.collectors.collector_iam import IAMScannerService
 from scanner.schemas import ScanResponse
 
 router = APIRouter(
-    prefix="/api/scanner",
+    prefix="/scanner",
     tags=["scanner"],
 )
 
@@ -34,14 +34,13 @@ def get_iam_client():
 
 
 def _auto_load_to_neo4j(json_file: str):
-    # Auto-load collector output into Neo4j
     try:
-        from backend.scanner.loaders.loader_neo4j import Neo4jLoader
-        
+        from scanner.loaders.loader_neo4j import Neo4jLoader
+
         if not os.path.exists(json_file):
             print(f"Warning: {json_file} not found")
             return
-        
+
         loader = Neo4jLoader()
         try:
             loader.ensure_schema_exists()
@@ -54,11 +53,10 @@ def _auto_load_to_neo4j(json_file: str):
 
 
 def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse:
-    # Build scan response and auto-load into Neo4j
     end = datetime.now()
     findings = output["nodes"]["Finding"]
     relationships = output["relationships"]
-    
+
     return ScanResponse(
         scan_start=start.isoformat() + "Z",
         duration_seconds=(end - start).total_seconds(),
@@ -71,49 +69,41 @@ def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse
 
 @router.post("/ec2", response_model=ScanResponse)
 def scan_ec2(client=Depends(get_ec2_client)):
-    # Scan EC2 instances and auto-load into Neo4j
     start = datetime.now()
     output = EC2ScannerService(client).run_scanner()
-    
-    # Auto-load into Neo4j
-    _auto_load_to_neo4j("/data/findings_ec2.json")
-    
+
+    _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
+
     return _scan_response("EC2", start, output)
 
 
 @router.post("/s3", response_model=ScanResponse)
 def scan_s3(client=Depends(get_s3_client)):
-    # Scan S3 buckets and auto-load into Neo4j
     start = datetime.now()
     output = S3ScannerService(client).run_scanner()
-    
-    # Auto-load into Neo4j
-    _auto_load_to_neo4j("/data/findings_s3.json")
-    
+
+    _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
+
     return _scan_response("S3", start, output)
 
 
 @router.post("/lambda", response_model=ScanResponse)
 def scan_lambda(client=Depends(get_lambda_client)):
-    # Scan Lambda functions and auto-load into Neo4j
     start = datetime.now()
     output = LambdaScannerService(client).run_scanner()
-    
-    # Auto-load into Neo4j
-    _auto_load_to_neo4j("/data/findings_lambda.json")
-    
+
+    _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
+
     return _scan_response("Lambda", start, output)
 
 
 @router.post("/iam", response_model=ScanResponse)
 def scan_iam(client=Depends(get_iam_client)):
-    # Scan IAM resources and auto-load into Neo4j
     start = datetime.now()
     output = IAMScannerService(client).run_scanner()
-    
-    # Auto-load into Neo4j
-    _auto_load_to_neo4j("/data/findings_iam.json")
-    
+
+    _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
+
     return _scan_response("IAM", start, output)
 
 
@@ -124,24 +114,22 @@ def scan_all(
     lambda_client=Depends(get_lambda_client),
     iam_client=Depends(get_iam_client)
 ):
-    # Scan all resources and auto-load into Neo4j
     start = datetime.now()
-    
+
     results = {
         "ec2": EC2ScannerService(ec2_client).run_scanner(),
         "s3": S3ScannerService(s3_client).run_scanner(),
         "lambda": LambdaScannerService(lambda_client).run_scanner(),
         "iam": IAMScannerService(iam_client).run_scanner(),
     }
-    
-    # Auto-load all into Neo4j
-    _auto_load_to_neo4j("/data/findings_ec2.json")
-    _auto_load_to_neo4j("/data/findings_s3.json")
-    _auto_load_to_neo4j("/data/findings_lambda.json")
-    _auto_load_to_neo4j("/data/findings_iam.json")
-    
+
+    _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
+    _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
+    _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
+    _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
+
     end = datetime.now()
-    
+
     return {
         "scan_start": start.isoformat() + "Z",
         "duration_seconds": (end - start).total_seconds(),

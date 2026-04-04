@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from scanner.router import router as scanners_router
 
-from neo4j_client import neo4j_client
+from .neo4j_client import neo4j_client
 
 log = logging.getLogger("uvicorn.error")
 

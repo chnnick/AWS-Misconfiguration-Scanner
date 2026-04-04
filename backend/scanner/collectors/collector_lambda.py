@@ -6,7 +6,7 @@ import zipfile
 import io
 from datetime import datetime
 
-from scanner.collectors.utils import contains_credentials, make_finding
+from scanner.collectors.utils import contains_credentials, get_findings_path, make_finding
 
 
 class LambdaScannerService:
@@ -99,7 +99,7 @@ class LambdaScannerService:
             "relationships": relationships
         }
 
-        with open("/data/findings_lambda.json", "w") as f:
+        with open(get_findings_path("findings_lambda.json"), "w") as f:
             json.dump(output, f, indent=2)
 
         return output

@@ -2,7 +2,7 @@
 
 import json
 from datetime import datetime
-from scanner.collectors.utils import make_finding
+from scanner.collectors.utils import get_findings_path, make_finding
 
 
 class EC2ScannerService:
@@ -119,7 +119,7 @@ class EC2ScannerService:
             "relationships": relationships
         }
 
-        with open("/data/findings_ec2.json", "w") as f:
+        with open(get_findings_path("findings_ec2.json"), "w") as f:
             json.dump(output, f, indent=2)
             
         return output

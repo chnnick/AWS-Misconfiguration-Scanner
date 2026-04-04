@@ -1,5 +1,17 @@
+import os
 import re
 import uuid
+from pathlib import Path
+
+
+def get_findings_path(filename: str) -> str:
+    base = os.environ.get("SCANNER_OUTPUT_DIR")
+    if base:
+        root = Path(base)
+    else:
+        root = Path(__file__).resolve().parent.parent.parent / "data"
+    root.mkdir(parents=True, exist_ok=True)
+    return str(root / filename)
 
 
 # Credential Patterns

@@ -2,7 +2,7 @@
 from datetime import datetime
 import json
 
-from scanner.collectors.utils import make_finding
+from scanner.collectors.utils import get_findings_path, make_finding
 
 
 class IAMScannerService:
@@ -186,7 +186,7 @@ class IAMScannerService:
             "relationships": relationships
         }
 
-        with open("/data/findings_iam.json", "w") as f:
+        with open(get_findings_path("findings_iam.json"), "w") as f:
             json.dump(output, f, indent=2)
         
         return output

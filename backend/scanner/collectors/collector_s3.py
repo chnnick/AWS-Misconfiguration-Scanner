@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from scanner.collectors.utils import contains_credentials, make_finding
+from scanner.collectors.utils import contains_credentials, get_findings_path, make_finding
 import json
 from datetime import datetime
 
@@ -158,7 +158,7 @@ class S3ScannerService:
             "relationships": relationships
         }
 
-        with open("/data/findings_s3.json", "w") as f:
+        with open(get_findings_path("findings_s3.json"), "w") as f:
             json.dump(output, f, indent=2)
 
         return output
