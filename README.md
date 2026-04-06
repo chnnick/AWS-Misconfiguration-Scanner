@@ -12,7 +12,17 @@ ENSURE YOU HAVE A VIRTUAL ENVIRONMENT (Example .venv)
 2. Install deps (if needed):
 `pip install -r requirements.txt`
 
-3. Run the API:
+3. Activate docker
+  a. open docker desktop on ur computer (just to make it run)
+  b. `docker ps` (list all containers in this case just make sure no error)
+  c. `docker compose up` (spin up the container)
+  d. wait like 20 sec  (wait for it to fully spin up)
+TO MANUALLY LOAD SCHEMA:
+docker exec -it cspm-neo4j cypher-shell -u neo4j -p T3stP2ssw0rdF0rNeo4jANJL --file /var/lib/neo4j/import/schema.cypher
+  e. `docker ps`  (list ur docker containers again, to show it works)
+  f. `docker compose down -v`  (delete containers once no longer needed)
+
+4. Run the API:
 `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
 
 React + Vite Frontend
