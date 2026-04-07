@@ -5,6 +5,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { exportResultsToPdf } from '@/lib/pdf';
 import type { ScanResult } from '@/types/scan';
 
 interface ResultsPanelProps {
@@ -18,7 +20,12 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h2 className="mb-4 text-xl font-semibold text-zinc-100">Scan Results</h2>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-zinc-100">Scan Results</h2>
+        <Button onClick={() => exportResultsToPdf(results)} variant="secondary">
+          Download PDF
+        </Button>
+      </div>
       <Accordion type="multiple" className="space-y-2">
         {results.map((result) => (
           <AccordionItem
