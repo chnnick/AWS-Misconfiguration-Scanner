@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 
 import boto3
@@ -15,6 +16,7 @@ router = APIRouter(
     prefix="/scanner",
     tags=["scanner"],
 )
+logger = logging.getLogger(__name__)
 
 def _boto_client(service_name: str):
     return boto3.client(service_name)
@@ -38,18 +40,23 @@ def _auto_load_to_neo4j(json_file: str):
         from scanner.loaders.loader_neo4j import Neo4jLoader
 
         if not os.path.exists(json_file):
-            print(f"Warning: {json_file} not found")
+            logger.warning(
+                "Neo4j auto-load skipped; findings file not found: %s (cwd=%s)",
+                json_file,
+                os.getcwd(),
+            )
             return
 
+        logger.info("Starting Neo4j auto-load for %s", json_file)
         loader = Neo4jLoader()
         try:
             loader.ensure_schema_exists()
             loader.load_collector_output(json_file)
-            print(f"Loaded {json_file} into Neo4j")
+            logger.info("Loaded %s into Neo4j", json_file)
         finally:
             loader.close()
-    except Exception as e:
-        print(f"Warning: Could not auto-load into Neo4j: {e}")
+    except Exception:
+        logger.exception("Neo4j auto-load failed for %s", json_file)
 
 
 def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse:
@@ -69,42 +76,50 @@ def _scan_response(resource: str, start: datetime, output: dict) -> ScanResponse
 
 @router.post("/ec2", response_model=ScanResponse)
 def scan_ec2(client=Depends(get_ec2_client)):
-    start = datetime.now()
-    output = EC2ScannerService(client).run_scanner()
-
-    _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
-
-    return _scan_response("EC2", start, output)
+    try:
+        start = datetime.now()
+        output = EC2ScannerService(client).run_scanner()
+        _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
+        return _scan_response("EC2", start, output)
+    except Exception:
+        logger.exception("EC2 scan endpoint failed")
+        raise
 
 
 @router.post("/s3", response_model=ScanResponse)
 def scan_s3(client=Depends(get_s3_client)):
-    start = datetime.now()
-    output = S3ScannerService(client).run_scanner()
-
-    _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
-
-    return _scan_response("S3", start, output)
+    try:
+        start = datetime.now()
+        output = S3ScannerService(client).run_scanner()
+        _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
+        return _scan_response("S3", start, output)
+    except Exception:
+        logger.exception("S3 scan endpoint failed")
+        raise
 
 
 @router.post("/lambda", response_model=ScanResponse)
 def scan_lambda(client=Depends(get_lambda_client)):
-    start = datetime.now()
-    output = LambdaScannerService(client).run_scanner()
-
-    _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
-
-    return _scan_response("Lambda", start, output)
+    try:
+        start = datetime.now()
+        output = LambdaScannerService(client).run_scanner()
+        _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
+        return _scan_response("Lambda", start, output)
+    except Exception:
+        logger.exception("Lambda scan endpoint failed")
+        raise
 
 
 @router.post("/iam", response_model=ScanResponse)
 def scan_iam(client=Depends(get_iam_client)):
-    start = datetime.now()
-    output = IAMScannerService(client).run_scanner()
-
-    _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
-
-    return _scan_response("IAM", start, output)
+    try:
+        start = datetime.now()
+        output = IAMScannerService(client).run_scanner()
+        _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
+        return _scan_response("IAM", start, output)
+    except Exception:
+        logger.exception("IAM scan endpoint failed")
+        raise
 
 
 @router.post("/all")
@@ -114,26 +129,30 @@ def scan_all(
     lambda_client=Depends(get_lambda_client),
     iam_client=Depends(get_iam_client)
 ):
-    start = datetime.now()
+    try:
+        start = datetime.now()
 
-    results = {
-        "ec2": EC2ScannerService(ec2_client).run_scanner(),
-        "s3": S3ScannerService(s3_client).run_scanner(),
-        "lambda": LambdaScannerService(lambda_client).run_scanner(),
-        "iam": IAMScannerService(iam_client).run_scanner(),
-    }
+        results = {
+            "ec2": EC2ScannerService(ec2_client).run_scanner(),
+            "s3": S3ScannerService(s3_client).run_scanner(),
+            "lambda": LambdaScannerService(lambda_client).run_scanner(),
+            "iam": IAMScannerService(iam_client).run_scanner(),
+        }
 
-    _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
-    _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
-    _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
-    _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
+        _auto_load_to_neo4j(get_findings_path("findings_ec2.json"))
+        _auto_load_to_neo4j(get_findings_path("findings_s3.json"))
+        _auto_load_to_neo4j(get_findings_path("findings_lambda.json"))
+        _auto_load_to_neo4j(get_findings_path("findings_iam.json"))
 
-    end = datetime.now()
+        end = datetime.now()
 
-    return {
-        "scan_start": start.isoformat() + "Z",
-        "duration_seconds": (end - start).total_seconds(),
-        "scans_completed": len(results),
-        "total_findings": sum(len(r["nodes"]["Finding"]) for r in results.values()),
-        "results": results
-    }
+        return {
+            "scan_start": start.isoformat() + "Z",
+            "duration_seconds": (end - start).total_seconds(),
+            "scans_completed": len(results),
+            "total_findings": sum(len(r["nodes"]["Finding"]) for r in results.values()),
+            "results": results
+        }
+    except Exception:
+        logger.exception("Full scan endpoint failed")
+        raise
