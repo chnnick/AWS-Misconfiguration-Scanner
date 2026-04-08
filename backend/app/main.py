@@ -3,18 +3,27 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
+
 from scanner.router import router as scanners_router
 
 from .neo4j_client import neo4j_client
 
-log = logging.getLogger("uvicorn.error")
+logger = logging.getLogger(__name__)
+
+_cors_raw = os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173",
+)
+_cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     port = os.environ.get("PORT", "8000")
     host = os.environ.get("API_HOST", "127.0.0.1")
     base = f"http://{host}:{port}"
-    log.info(
+    logger.info(
         "\nCloudSight API — %s\ndocs: %s/docs\nhealth: %s/api/health\nscanners:\n\tPOST %s/api/scanner/ec2\n\tPOST %s/api/scanner/s3\n\tPOST %s/api/scanner/lambda\n\tPOST %s/api/scanner/iam",
         base,
         base,
@@ -34,6 +43,31 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    try:
+        response = await call_next(request)
+        line = "%s %s -> %s"
+        args = (request.method, request.url.path, response.status_code)
+        if response.status_code >= 400:
+            logger.warning(line, *args)
+        else:
+            logger.info(line, *args)
+        return response
+    except Exception:
+        logger.exception("%s %s", request.method, request.url.path)
+        raise
+
 
 app.include_router(scanners_router, prefix="/api", tags=["scanner"])
 
