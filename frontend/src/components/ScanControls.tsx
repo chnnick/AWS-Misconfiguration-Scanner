@@ -9,6 +9,7 @@ interface ScanControlsProps {
   onToggleChange: (id: string, enabled: boolean) => void;
   onScan: () => void;
   isScanning: boolean;
+  riskScore?: number | null;
 }
 
 export function ScanControls({
@@ -16,34 +17,58 @@ export function ScanControls({
   onToggleChange,
   onScan,
   isScanning,
+  riskScore,
 }: ScanControlsProps) {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-center gap-8">
+    <aside className="flex h-full min-h-0 w-full flex-col rounded-lg border border-zinc-800 bg-zinc-900/80 p-5 shadow-sm">
+      <div className="mb-6 shrink-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Risk score
+        </p>
+        <div
+          className="mt-2 flex min-h-[5.5rem] items-center justify-center rounded-md border border-dashed border-zinc-700 bg-zinc-950/50 px-3 py-4"
+          aria-label={riskScore != null ? `Risk score ${riskScore}` : 'Risk score not available'}
+        >
+          {riskScore != null ? (
+            <span className="text-3xl font-semibold tabular-nums text-zinc-100">
+              {riskScore}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <p className="mb-3 shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        Resources
+      </p>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2">
         {toggles.map((toggle) => (
-          <div key={toggle.id} className="flex items-center gap-3">
+          <div
+            key={toggle.id}
+            className="flex w-full flex-row items-center justify-between gap-3 rounded-md border border-zinc-800/80 bg-zinc-950/50 px-3 py-2.5"
+          >
+            <Label
+              htmlFor={toggle.id}
+              className="cursor-pointer text-sm font-medium text-zinc-100"
+            >
+              {toggle.label}
+            </Label>
             <Switch
               id={toggle.id}
               checked={toggle.enabled}
               onCheckedChange={(checked) => onToggleChange(toggle.id, checked)}
               disabled={isScanning}
             />
-            <Label
-              htmlFor={toggle.id}
-              className="cursor-pointer text-base font-medium text-zinc-100"
-            >
-              {toggle.label}
-            </Label>
           </div>
         ))}
       </div>
 
-      <div className="flex justify-center">
+      <div className="mt-6 shrink-0 border-t border-zinc-800 pt-5">
         <Button
           onClick={onScan}
           disabled={isScanning || !toggles.some((t) => t.enabled)}
           size="lg"
-          className="min-w-[200px]"
+          className="w-full"
         >
           {isScanning ? (
             <>
@@ -55,6 +80,6 @@ export function ScanControls({
           )}
         </Button>
       </div>
-    </div>
+    </aside>
   );
 }

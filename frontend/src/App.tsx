@@ -105,15 +105,20 @@ function App() {
     <div className="min-h-screen bg-zinc-950">
       <Header />
 
-      <main className="mx-auto max-w-7xl space-y-12 px-8 py-12">
-        <ScanControls
-          toggles={toggles}
-          onToggleChange={handleToggleChange}
-          onScan={handleScan}
-          isScanning={isScanning}
-        />
-
-        <GraphPlaceholder />
+      <main className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-7xl flex-col gap-12 px-8 py-12">
+        <div className="flex min-h-0 flex-1 flex-col gap-8 sm:flex-row sm:items-stretch">
+          <div className="min-w-0 flex-[3] basis-0 sm:min-h-[min(28rem,50vh)]">
+            <GraphPlaceholder />
+          </div>
+          <div className="flex min-w-0 flex-[1] basis-0 flex-col">
+            <ScanControls
+              toggles={toggles}
+              onToggleChange={handleToggleChange}
+              onScan={handleScan}
+              isScanning={isScanning}
+            />
+          </div>
+        </div>
 
         <ResultsPanel results={results} />
       </main>
