@@ -13,14 +13,14 @@ ENSURE YOU HAVE A VIRTUAL ENVIRONMENT (Example .venv)
 `pip install -r requirements.txt`
 
 3. Activate docker
-  * a. open docker desktop (to ensure it is running)
-  * b. `docker ps` (list all containers)
-  * c. `docker compose up` (spin up the container)
-  * d. wait like 20 sec  (wait for it to fully spin up)
-TO MANUALLY LOAD SCHEMA: (-p field references the password within your env file)
-    * `docker exec -it cspm-neo4j cypher-shell -u neo4j -p password123 --file /var/lib/neo4j/import/schema.cypher`
-  * e. `docker ps`  (list ur docker containers again, to show it works)
-  * f. `docker compose down -v`  (delete containers once no longer required)
+  a. open docker desktop on ur computer (just to make it run)
+  b. `docker ps` (list all containers in this case just make sure no error)
+  c. `docker compose up` (spin up the container)
+  d. wait like 20 sec  (wait for it to fully spin up)
+  e. Load schema: `docker exec -it cloudsight-neo4j cypher-shell -u neo4j -p [YOUR_PASSWORD] --file /var/lib/neo4j/import/schema.cypher`
+    - Make sure you have valid values in your `.env` file (see `.env.example`)
+  f. `docker ps`  (list ur docker containers again, to show it works)
+  g. `docker compose down -v`  (delete containers once no longer needed)
 
 4. Run the API:
 `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`
@@ -34,4 +34,3 @@ This project uses [CloudGoat](https://github.com/RhinoSecurityLabs/cloudgoat) by
 We do not claim ownership of CloudGoat scenarios. All CloudGoat-related code and configurations remain under their original license and copyright by Rhino Security Labs.
 
 ---
-
