@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { Header } from '@/components/Header';
-import { ScanControls } from '@/components/ScanControls';
-import { GraphView } from '@/components/GraphPlaceholder';
-import { ResultsPanel } from '@/components/ResultsPanel';
-import type { ResourceToggle, ScanResult, ResourceType } from '@/types/scan';
+import { useState } from "react";
+import { Header } from "@/components/Header";
+import { ScanControls } from "@/components/ScanControls";
+import { GraphView } from "@/components/GraphView
+import { ResultsPanel } from "@/components/ResultsPanel";
+import type { ResourceToggle, ScanResult, ResourceType } from "@/types/scan";
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = "http://localhost:8000";
 
 function App() {
   const [toggles, setToggles] = useState<ResourceToggle[]>([
-    { id: 'ec2', label: 'EC2', enabled: true },
-    { id: 'iam', label: 'IAM', enabled: true },
-    { id: 's3', label: 'S3', enabled: true },
-    { id: 'lambda', label: 'Lambda', enabled: true },
+    { id: "ec2", label: "EC2", enabled: true },
+    { id: "iam", label: "IAM", enabled: true },
+    { id: "s3", label: "S3", enabled: true },
+    { id: "lambda", label: "Lambda", enabled: true },
   ]);
 
   const [isScanning, setIsScanning] = useState(false);
@@ -22,8 +22,8 @@ function App() {
   const handleToggleChange = (id: string, enabled: boolean) => {
     setToggles((prev) =>
       prev.map((toggle) =>
-        toggle.id === id ? { ...toggle, enabled } : toggle
-      )
+        toggle.id === id ? { ...toggle, enabled } : toggle,
+      ),
     );
   };
 
@@ -42,11 +42,11 @@ function App() {
         const response = await fetch(
           `${API_BASE_URL}/api/scanner/${resource}`,
           {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (!response.ok) {
@@ -54,7 +54,7 @@ function App() {
           let detail = text || response.statusText;
           try {
             const errBody = JSON.parse(text) as { detail?: unknown };
-            if (typeof errBody?.detail === 'string') {
+            if (typeof errBody?.detail === "string") {
               detail = errBody.detail;
             } else if (errBody?.detail != null) {
               detail = JSON.stringify(errBody.detail);
@@ -70,7 +70,7 @@ function App() {
         return {
           resource,
           data,
-          status: 'success' as const,
+          status: "success" as const,
         };
       } catch (error) {
         return {
@@ -78,8 +78,8 @@ function App() {
           error:
             error instanceof Error
               ? error.message
-              : 'Failed to fetch results — check backend connection',
-          status: 'error' as const,
+              : "Failed to fetch results — check backend connection",
+          status: "error" as const,
         };
       }
     });
@@ -87,13 +87,13 @@ function App() {
     const scanResults = await Promise.allSettled(scanPromises);
 
     const processedResults: ScanResult[] = scanResults.map((result) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         return result.value;
       } else {
         return {
-          resource: 'unknown' as ResourceType,
-          error: result.reason?.message || 'Unknown error occurred',
-          status: 'error' as const,
+          resource: "unknown" as ResourceType,
+          error: result.reason?.message || "Unknown error occurred",
+          status: "error" as const,
         };
       }
     });
