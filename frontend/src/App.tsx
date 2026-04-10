@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ScanControls } from '@/components/ScanControls';
-import { GraphPlaceholder } from '@/components/GraphPlaceholder';
+import { GraphView } from '@/components/GraphPlaceholder';
 import { ResultsPanel } from '@/components/ResultsPanel';
 import type { ResourceToggle, ScanResult, ResourceType } from '@/types/scan';
 
@@ -17,6 +17,7 @@ function App() {
 
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult[]>([]);
+  const [graphRefreshCount, setGraphRefreshCount] = useState(0);
 
   const handleToggleChange = (id: string, enabled: boolean) => {
     setToggles((prev) =>
@@ -99,6 +100,7 @@ function App() {
 
     setResults(processedResults);
     setIsScanning(false);
+    setGraphRefreshCount((c) => c + 1);
   };
 
   return (
@@ -108,7 +110,7 @@ function App() {
       <main className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-7xl flex-col gap-12 px-8 py-12">
         <div className="flex min-h-0 flex-1 flex-col gap-8 sm:flex-row sm:items-stretch">
           <div className="min-w-0 flex-[3] basis-0 sm:min-h-[min(28rem,50vh)]">
-            <GraphPlaceholder />
+            <GraphView refreshTrigger={graphRefreshCount} />
           </div>
           <div className="flex min-w-0 flex-[1] basis-0 flex-col">
             <ScanControls

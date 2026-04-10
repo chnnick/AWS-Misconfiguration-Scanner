@@ -128,18 +128,17 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
   const isEmpty = !loading && !error && graphData.nodes.length === 0;
 
   return (
-    <div className="flex h-full min-h-[min(20rem,40vh)] w-full flex-col sm:min-h-0">
-      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950">
-
-        {isEmpty && (
-          <div className="flex flex-1 flex-col items-center justify-center px-8 py-12">
-            <div className="text-center">
-              <Network className="mx-auto mb-4 h-12 w-12 text-zinc-600" />
-              <h3 className="mb-2 text-lg font-medium text-zinc-400">Neo4j Graph View</h3>
-              <p className="text-sm text-zinc-500">Run a scan to populate the graph</p>
-            </div>
+    <div className="relative flex h-full min-h-[min(20rem,40vh)] w-full flex-col sm:min-h-0">
+      {isEmpty && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950 px-8 py-12">
+          <div className="text-center">
+            <Network className="mx-auto mb-4 h-12 w-12 text-zinc-600" />
+            <h3 className="mb-2 text-lg font-medium text-zinc-400">Neo4j Graph View</h3>
+            <p className="text-sm text-zinc-500">Run a scan to populate the graph</p>
           </div>
-        )}
+        </div>
+      )}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950">
 
         {!isEmpty && (
           <>
