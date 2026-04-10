@@ -32,17 +32,19 @@ class Neo4jLoader:
         print("\nEnsuring schema exists...")
         
         with self.driver.session() as session:
-            # Indexes for fast lookups
-            session.run("CREATE INDEX s3_bucket_name IF NOT EXISTS FOR (n:S3Bucket) ON (n.bucket_name)")
+            # Drop standalone indexes that conflict with unique constraints (constraints create their own backing index)
+            session.run("DROP INDEX s3_bucket_name IF EXISTS")
+            session.run("DROP INDEX ec2_instance_id IF EXISTS")
+            session.run("DROP INDEX security_group_id IF EXISTS")
+            session.run("DROP INDEX secret_location IF EXISTS")
+
+            # Indexes for fast lookups (only for properties not covered by unique constraints)
             session.run("CREATE INDEX s3_bucket_region IF NOT EXISTS FOR (n:S3Bucket) ON (n.region)")
-            session.run("CREATE INDEX ec2_instance_id IF NOT EXISTS FOR (n:EC2Instance) ON (n.instance_id)")
             session.run("CREATE INDEX ec2_instance_region IF NOT EXISTS FOR (n:EC2Instance) ON (n.region)")
-            session.run("CREATE INDEX security_group_id IF NOT EXISTS FOR (n:SecurityGroup) ON (n.group_id)")
             session.run("CREATE INDEX secret_type IF NOT EXISTS FOR (n:Secret) ON (n.type)")
-            session.run("CREATE INDEX secret_location IF NOT EXISTS FOR (n:Secret) ON (n.location)")
             session.run("CREATE INDEX finding_severity IF NOT EXISTS FOR (n:Finding) ON (n.severity)")
             session.run("CREATE INDEX finding_type IF NOT EXISTS FOR (n:Finding) ON (n.type)")
-            
+
             # Unique constraints
             session.run("CREATE CONSTRAINT s3_bucket_unique IF NOT EXISTS FOR (n:S3Bucket) REQUIRE n.bucket_name IS UNIQUE")
             session.run("CREATE CONSTRAINT ec2_instance_unique IF NOT EXISTS FOR (n:EC2Instance) REQUIRE n.instance_id IS UNIQUE")
