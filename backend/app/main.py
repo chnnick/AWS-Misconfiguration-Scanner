@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 _cors_raw = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173",
+    os.getenv("FRONTEND_URL", "http://localhost:3000"),
 )
 _cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
