@@ -21,7 +21,7 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
       # Mounts init-scripts folder into Neo4j's import directory
-      - ./neo4j/init-scripts:/var/lib/neo4j/import:ro
+      - ./neo4j/init-scripts:/var/lib/neo4j/import
     restart: unless-stopped
 
 volumes:
