@@ -5,7 +5,7 @@ import { GraphView } from "@/components/GraphView";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import type { ResourceToggle, ScanResult, ResourceType } from "@/types/scan";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = process.env.API_BASE_URL;
 
 function App() {
   const [toggles, setToggles] = useState<ResourceToggle[]>([
