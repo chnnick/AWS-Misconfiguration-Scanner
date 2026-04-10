@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Header } from "@/components/Header";
 import { ScanControls } from "@/components/ScanControls";
-import { GraphView } from "@/components/GraphView
+import { GraphView } from "@/components/GraphView";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import type { ResourceToggle, ScanResult, ResourceType } from "@/types/scan";
 
