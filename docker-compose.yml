@@ -22,7 +22,28 @@ services:
       - neo4j_logs:/logs
       # Mounts init-scripts folder into Neo4j's import directory
       - ./neo4j/init-scripts:/var/lib/neo4j/import
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
     restart: unless-stopped
+
+  neo4j-init:
+    image: neo4j:5.15
+    container_name: cloudsight-neo4j-init
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./neo4j/init-scripts:/var/lib/neo4j/import
+    environment:
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    command: >
+      bash -c "cypher-shell -a bolt://neo4j:7687 -u $$NEO4J_USER -p $$NEO4J_PASSWORD --file /var/lib/neo4j/import/schema.cypher && echo 'Schema applied successfully'"
+    restart: "no"
 
 volumes:
   neo4j_data:
