@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Network, RefreshCw } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Network, RefreshCw } from "lucide-react";
 
-import ForceGraph2D from 'react-force-graph-2d';
+import ForceGraph2D from "react-force-graph-2d";
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.API_BASE_URL;
 
 interface GraphNode {
   id: string;
@@ -25,41 +25,49 @@ interface GraphData {
 }
 
 const NODE_COLORS: Record<string, string> = {
-  EC2Instance: '#3b82f6',
-  S3Bucket: '#22c55e',
-  IAMRole: '#f97316',
-  IAMUser: '#fb923c',
-  LambdaFunction: '#a855f7',
-  SecurityGroup: '#eab308',
-  SecurityGroupRule: '#fbbf24',
+  EC2Instance: "#3b82f6",
+  S3Bucket: "#22c55e",
+  IAMRole: "#f97316",
+  IAMUser: "#fb923c",
+  LambdaFunction: "#a855f7",
+  SecurityGroup: "#eab308",
+  SecurityGroupRule: "#fbbf24",
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  CRITICAL: '#dc2626',
-  HIGH: '#ea580c',
-  MEDIUM: '#ca8a04',
-  LOW: '#16a34a',
+  CRITICAL: "#dc2626",
+  HIGH: "#ea580c",
+  MEDIUM: "#ca8a04",
+  LOW: "#16a34a",
 };
 
 function getNodeColor(node: GraphNode): string {
-  if (node.label === 'Finding') {
+  if (node.label === "Finding") {
     const sev = node.properties?.severity as string | undefined;
-    return sev ? (SEVERITY_COLORS[sev] ?? '#ef4444') : '#ef4444';
+    return sev ? (SEVERITY_COLORS[sev] ?? "#ef4444") : "#ef4444";
   }
-  return NODE_COLORS[node.label] ?? '#94a3b8';
+  return NODE_COLORS[node.label] ?? "#94a3b8";
 }
 
 function getNodeName(node: GraphNode): string {
   const p = node.properties;
   switch (node.label) {
-    case 'EC2Instance':    return (p.instance_id as string)   ?? 'EC2';
-    case 'S3Bucket':       return (p.bucket_name as string)   ?? 'S3';
-    case 'IAMRole':        return (p.role_name as string)     ?? 'Role';
-    case 'IAMUser':        return (p.username as string)      ?? 'User';
-    case 'LambdaFunction': return (p.function_name as string) ?? 'Lambda';
-    case 'SecurityGroup':  return (p.group_name as string) ?? (p.group_id as string) ?? 'SG';
-    case 'Finding':        return (p.type as string)          ?? 'Finding';
-    default:               return node.label;
+    case "EC2Instance":
+      return (p.instance_id as string) ?? "EC2";
+    case "S3Bucket":
+      return (p.bucket_name as string) ?? "S3";
+    case "IAMRole":
+      return (p.role_name as string) ?? "Role";
+    case "IAMUser":
+      return (p.username as string) ?? "User";
+    case "LambdaFunction":
+      return (p.function_name as string) ?? "Lambda";
+    case "SecurityGroup":
+      return (p.group_name as string) ?? (p.group_id as string) ?? "SG";
+    case "Finding":
+      return (p.type as string) ?? "Finding";
+    default:
+      return node.label;
   }
 }
 
@@ -68,7 +76,10 @@ export interface GraphViewProps {
 }
 
 export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
-  const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
+  const [graphData, setGraphData] = useState<GraphData>({
+    nodes: [],
+    links: [],
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
@@ -81,7 +92,7 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/graph?limit=200`);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-      const raw = await res.json() as {
+      const raw = (await res.json()) as {
         nodes?: GraphNode[];
         edges?: { source: string; target: string; type: string }[];
         error?: string;
@@ -96,7 +107,9 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
         })),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load graph data');
+      setError(
+        err instanceof Error ? err.message : "Failed to load graph data",
+      );
     } finally {
       setLoading(false);
     }
@@ -133,27 +146,38 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-zinc-950 px-8 py-12">
           <div className="text-center">
             <Network className="mx-auto mb-4 h-12 w-12 text-zinc-600" />
-            <h3 className="mb-2 text-lg font-medium text-zinc-400">Neo4j Graph View</h3>
-            <p className="text-sm text-zinc-500">Run a scan to populate the graph</p>
+            <h3 className="mb-2 text-lg font-medium text-zinc-400">
+              Neo4j Graph View
+            </h3>
+            <p className="text-sm text-zinc-500">
+              Run a scan to populate the graph
+            </p>
           </div>
         </div>
       )}
       <div className="relative flex min-h-0 flex-1 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950">
-
         {!isEmpty && (
           <>
             {/* Legend */}
             <div className="absolute left-3 top-3 z-10 flex flex-col gap-1 rounded-md bg-zinc-900/90 p-2 text-xs backdrop-blur-sm">
               {Object.entries(NODE_COLORS).map(([label, color]) => (
                 <div key={label} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                  <span
+                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
                   <span className="text-zinc-400">{label}</span>
                 </div>
               ))}
-              <div className="mt-1 border-t border-zinc-700 pt-1 text-zinc-500">Findings</div>
+              <div className="mt-1 border-t border-zinc-700 pt-1 text-zinc-500">
+                Findings
+              </div>
               {Object.entries(SEVERITY_COLORS).map(([sev, color]) => (
                 <div key={sev} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                  <span
+                    className="h-2 w-2 flex-shrink-0 rounded-full"
+                    style={{ backgroundColor: color }}
+                  />
                   <span className="text-zinc-500">{sev}</span>
                 </div>
               ))}
@@ -165,7 +189,9 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
               disabled={loading}
               className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-700 disabled:opacity-50"
             >
-              <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-3 w-3 ${loading ? "animate-spin" : ""}`}
+              />
               Refresh
             </button>
           </>
@@ -203,30 +229,36 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
               graphData={graphData}
               backgroundColor="#09090b"
               nodeColor={(node: GraphNode) => getNodeColor(node)}
-              nodeLabel={(node: GraphNode) => `${node.label}: ${getNodeName(node)}`}
-              nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-                const radius = node.label === 'Finding' ? 5 : 7;
+              nodeLabel={(node: GraphNode) =>
+                `${node.label}: ${getNodeName(node)}`
+              }
+              nodeCanvasObject={(
+                node: GraphNode,
+                ctx: CanvasRenderingContext2D,
+                globalScale: number,
+              ) => {
+                const radius = node.label === "Finding" ? 5 : 7;
                 const color = getNodeColor(node);
 
                 ctx.beginPath();
                 ctx.arc(node.x!, node.y!, radius, 0, 2 * Math.PI);
                 ctx.fillStyle = color;
                 ctx.fill();
-                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.strokeStyle = "rgba(255,255,255,0.15)";
                 ctx.lineWidth = 0.8;
                 ctx.stroke();
 
                 // Type abbreviation inside node
                 const abbr =
-                  node.label === 'Finding'
-                    ? ((node.properties?.severity as string) ?? 'F').charAt(0)
-                    : node.label.replace(/[a-z]/g, '').slice(0, 2);
+                  node.label === "Finding"
+                    ? ((node.properties?.severity as string) ?? "F").charAt(0)
+                    : node.label.replace(/[a-z]/g, "").slice(0, 2);
                 const fontSize = Math.min(radius * 0.9, 12 / globalScale);
                 if (fontSize > 1.5) {
                   ctx.font = `bold ${fontSize}px Sans-Serif`;
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "middle";
+                  ctx.fillStyle = "rgba(255,255,255,0.9)";
                   ctx.fillText(abbr, node.x!, node.y!);
                 }
 
@@ -235,17 +267,17 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
                   const name = getNodeName(node).slice(0, 18);
                   const labelSize = 10 / globalScale;
                   ctx.font = `${labelSize}px Sans-Serif`;
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'top';
-                  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "top";
+                  ctx.fillStyle = "rgba(255,255,255,0.65)";
                   ctx.fillText(name, node.x!, node.y! + radius + 1.5);
                 }
               }}
-              linkColor={() => 'rgba(148,163,184,0.25)'}
+              linkColor={() => "rgba(148,163,184,0.25)"}
               linkWidth={1}
               linkDirectionalArrowLength={4}
               linkDirectionalArrowRelPos={1}
-              linkDirectionalArrowColor={() => 'rgba(148,163,184,0.5)'}
+              linkDirectionalArrowColor={() => "rgba(148,163,184,0.5)"}
               linkLabel={(link: GraphLink) => link.type}
               linkCurvature={0.1}
               onNodeClick={handleNodeClick}
@@ -259,7 +291,10 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
         {selectedNode && (
           <div className="absolute bottom-3 right-3 z-10 max-h-52 w-64 overflow-auto rounded-lg bg-zinc-800/95 p-3 text-xs shadow-xl backdrop-blur-sm">
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-semibold" style={{ color: getNodeColor(selectedNode) }}>
+              <span
+                className="font-semibold"
+                style={{ color: getNodeColor(selectedNode) }}
+              >
                 {selectedNode.label}
               </span>
               <button
