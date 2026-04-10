@@ -2,10 +2,16 @@
 # Run pip install -r requirements.txt
 
 # AWS SDK for Python - interact with AWS services
-boto3>=1.26.0
+boto3>=1.35.0
 
 # Neo4j Python driver - connect to Neo4j graph database
 neo4j>=5.0.0
 
 # Load environment variables from .env files
 python-dotenv>=1.0.0
+
+# FastAPI - web framework for building APIs
+fastapi>=0.115.0
+
+# Pydantic Settings - manage application settings with Pydantic
+pydantic-settings

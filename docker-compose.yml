@@ -1,8 +1,15 @@
 # run with docker-compose up -d
 services:
+  frontend:
+    build: ./frontend
+    container_name: cloudsight-frontend
+    ports:
+      - "3000:3000"   # React app
+    restart: unless-stopped
+  
   neo4j:
     image: neo4j:5.15
-    container_name: cspm-neo4j
+    container_name: cloudsight-neo4j
     ports:
       - "7474:7474"   # Neo4j Browser (http://localhost:7474)
       - "7687:7687"   # for Python connection - Bolt
