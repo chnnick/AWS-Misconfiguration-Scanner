@@ -185,4 +185,39 @@ class Neo4jClient:
             """)
             return [dict(record) for record in result]
 
+    def get_findings_with_resources(self):
+        # Get all findings with their parent resource type and properties for in-memory scoring
+        with self.driver.session() as session:
+            result = session.run("""
+                MATCH (resource)-[:HAS_FINDING]->(f:Finding)
+                RETURN f.finding_id as finding_id,
+                       f.type as type,
+                       f.severity as severity,
+                       f.description as description,
+                       f.remediation as remediation,
+                       f.cis_control as cis_control,
+                       f.owasp as owasp,
+                       labels(resource)[0] as resource_type,
+                       properties(resource) as resource_props
+            """)
+            return [dict(record) for record in result]
+
+    def get_finding_with_resource(self, finding_id):
+        # Get a single finding with its parent resource type and properties
+        with self.driver.session() as session:
+            result = session.run("""
+                MATCH (resource)-[:HAS_FINDING]->(f:Finding {finding_id: $finding_id})
+                RETURN f.finding_id as finding_id,
+                       f.type as type,
+                       f.severity as severity,
+                       f.description as description,
+                       f.remediation as remediation,
+                       f.cis_control as cis_control,
+                       f.owasp as owasp,
+                       labels(resource)[0] as resource_type,
+                       properties(resource) as resource_props
+            """, finding_id=finding_id)
+            record = result.single()
+            return dict(record) if record else None
+
 neo4j_client = Neo4jClient()

@@ -9,6 +9,7 @@ from starlette.requests import Request
 from scanner.router import router as scanners_router
 
 from .neo4j_client import neo4j_client
+from .routers.risk import router as risk_router
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,7 @@ async def log_requests(request: Request, call_next):
 
 
 app.include_router(scanners_router, prefix="/api", tags=["scanner"])
+app.include_router(risk_router, prefix="/api", tags=["risk"])
 
 @app.get("/api/health")
 def health():
