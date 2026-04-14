@@ -6,10 +6,9 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from scanner.router import router as scanners_router
+from scanner.router import router as scanners_router, risk_router
 
 from .neo4j_client import neo4j_client
-from .routers.risk import router as risk_router
 
 logger = logging.getLogger(__name__)
 

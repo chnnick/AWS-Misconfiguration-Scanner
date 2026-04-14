@@ -17,6 +17,32 @@ RULE_TABLE = {
     # S3
     # -------------------------------------------------------------------------
 
+    ("S3Bucket", "BLOCK_PUBLIC_ACCESS_DISABLED"): {
+        "ease_of_exploit": 3,
+        "exposure": 4,
+        "whats_at_risk": 3,
+        "blast_radius": 2,
+        "detection_likelihood": 2,
+        "rationale_ease": "Requires the attacker to also find a permissive ACL or policy; disabling Block Public Access alone doesn't expose objects.",
+        "rationale_exposure": "Removes the account-level safety net; any permissive ACL or policy now takes effect and exposes the bucket to the internet.",
+        "rationale_risk": "All objects in the bucket become potentially reachable; actual exposure depends on ACLs and policies that Block Public Access was suppressing.",
+        "rationale_blast": "Impact is contained to objects in this single bucket.",
+        "rationale_detection": "S3 server-access logging is disabled by default; CloudTrail S3 data events require explicit opt-in.",
+    },
+
+    ("S3Bucket", "PLAINTEXT_CREDENTIALS_IN_S3"): {
+        "ease_of_exploit": 4,
+        "exposure": 4,
+        "whats_at_risk": 5,
+        "blast_radius": 4,
+        "detection_likelihood": 2,
+        "rationale_ease": "Any principal with S3 read access (or public access if the bucket is open) can retrieve the file with a single API call.",
+        "rationale_exposure": "Exposure depends on bucket ACLs; if the bucket is public the credentials are internet-accessible with no authentication.",
+        "rationale_risk": "Plaintext credentials are immediately usable; no decryption, privilege escalation, or further access required.",
+        "rationale_blast": "Stolen credentials are long-lived and usable from any internet host, bridging to every service they permit.",
+        "rationale_detection": "S3 access logs are not enabled by default; credential use may only surface in CloudTrail after significant abuse.",
+    },
+
     ("S3Bucket", "NO_BUCKET_POLICY"): {
         "ease_of_exploit": 2,
         "exposure": 3,
@@ -409,6 +435,19 @@ RULE_TABLE = {
         "rationale_risk": "ModifyInstanceAttribute enables disabling IMDSv2, changing user-data for code execution, or swapping security groups.",
         "rationale_blast": "Attacker can alter instance behaviour across the account wherever the role has EC2 resource scope.",
         "rationale_detection": "EC2 ModifyInstanceAttribute is logged in CloudTrail; unusual attribute changes can be alerted.",
+    },
+
+    ("IAMRole", "ROLE_CAN_MODIFY_INSTANCE_USERDATA"): {
+        "ease_of_exploit": 2,
+        "exposure": 2,
+        "whats_at_risk": 3,
+        "blast_radius": 3,
+        "detection_likelihood": 3,
+        "rationale_ease": "Requires first assuming or compromising the role; the EC2 permission then enables userdata modification for arbitrary code execution.",
+        "rationale_exposure": "Requires valid role credentials; no direct internet-facing vector.",
+        "rationale_risk": "ec2:ModifyInstanceAttribute allows replacing instance userdata, which executes as root on next reboot — a reliable code-execution primitive.",
+        "rationale_blast": "Attacker can inject code into instances across the account wherever the role has EC2 resource scope.",
+        "rationale_detection": "EC2 ModifyInstanceAttribute is logged in CloudTrail; unusual userdata changes can be alerted on.",
     },
 
     ("IAMUser", "USER_CAN_DELETE_EC2_TAGS"): {
