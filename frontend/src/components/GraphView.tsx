@@ -3,7 +3,8 @@ import { Network, RefreshCw } from "lucide-react";
 
 import ForceGraph2D from "react-force-graph-2d";
 
-const API_BASE_URL = process.env.API_BASE_URL;
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 interface GraphNode {
   id: string;
@@ -90,7 +91,8 @@ export function GraphView({ refreshTrigger = 0 }: GraphViewProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/graph?limit=200`);
+      const graphUrl = `${API_BASE_URL}/api/graph?limit=200`;
+      const res = await fetch(graphUrl);
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const raw = (await res.json()) as {
         nodes?: GraphNode[];

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/Header";
 import { ScanControls } from "@/components/ScanControls";
 import { GraphView } from "@/components/GraphView";
 import { ResultsPanel } from "@/components/ResultsPanel";
 import type { ResourceToggle, ScanResult, ResourceType } from "@/types/scan";
 
-const API_BASE_URL = process.env.API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 function App() {
   const [toggles, setToggles] = useState<ResourceToggle[]>([
@@ -18,6 +18,26 @@ function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [results, setResults] = useState<ScanResult[]>([]);
   const [graphRefreshCount, setGraphRefreshCount] = useState(0);
+  const [riskScore, setRiskScore] = useState<number | null>(null);
+
+  const fetchRiskScore = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/risk/findings`);
+      if (!res.ok) return;
+      const body = await res.json();
+      if (!Array.isArray(body)) return;
+      const scores = (body as { risk_score: number | null }[])
+        .map((f) => f.risk_score)
+        .filter((s): s is number => s !== null);
+      setRiskScore(scores.length > 0 ? Math.max(...scores) : null);
+    } catch {
+      // network error or JSON parse failure — leave score as-is
+    }
+  };
+
+  useEffect(() => {
+    fetchRiskScore();
+  }, []);
 
   const handleToggleChange = (id: string, enabled: boolean) => {
     setToggles((prev) =>
@@ -101,6 +121,7 @@ function App() {
     setResults(processedResults);
     setIsScanning(false);
     setGraphRefreshCount((c) => c + 1);
+    await fetchRiskScore();
   };
 
   return (
@@ -118,6 +139,7 @@ function App() {
               onToggleChange={handleToggleChange}
               onScan={handleScan}
               isScanning={isScanning}
+              riskScore={riskScore}
             />
           </div>
         </div>

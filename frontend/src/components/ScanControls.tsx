@@ -1,8 +1,8 @@
-import { Loader as Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import type { ResourceToggle } from '@/types/scan';
+import { Loader as Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import type { ResourceToggle } from "@/types/scan";
 
 interface ScanControlsProps {
   toggles: ResourceToggle[];
@@ -27,13 +27,34 @@ export function ScanControls({
         </p>
         <div
           className="mt-2 flex min-h-[5.5rem] items-center justify-center rounded-md border border-dashed border-zinc-700 bg-zinc-950/50 px-3 py-4"
-          aria-label={riskScore != null ? `Risk score ${riskScore}` : 'Risk score not available'}
+          aria-label={
+            riskScore != null
+              ? `Risk score ${riskScore}`
+              : "Risk score not available"
+          }
         >
           {riskScore != null ? (
-            <span className="text-3xl font-semibold tabular-nums text-zinc-100">
-              {riskScore}
-            </span>
-          ) : null}
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-3xl font-semibold tabular-nums text-zinc-100">
+                {riskScore}
+              </span>
+              <span
+                className={`text-xs font-medium ${
+                  riskScore >= 4.0
+                    ? "text-red-400"
+                    : riskScore >= 3.0
+                      ? "text-orange-400"
+                      : riskScore >= 2.0
+                        ? "text-yellow-400"
+                        : "text-green-400"
+                }`}
+              >
+                {riskScore}
+              </span>
+            </div>
+          ) : (
+            <span className="text-xs text-zinc-600">Run a scan</span>
+          )}
         </div>
       </div>
 
@@ -76,7 +97,7 @@ export function ScanControls({
               Scanning...
             </>
           ) : (
-            'Scan Resources'
+            "Scan Resources"
           )}
         </Button>
       </div>
