@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import type { ScanResult } from '@/types/scan';
-import { countFindings } from '@/lib/reportUtils';
+import { countFindings, extractFindings } from '@/lib/reportUtils';
 
 export function exportResultsToPdf(results: ScanResult[]) {
   const doc = new jsPDF();
@@ -10,16 +10,21 @@ export function exportResultsToPdf(results: ScanResult[]) {
   const lineHeight = 6;
   let y = 20;
 
-  const writeWrapped = (text: string) => {
+  const ensureSpace = (needed = 10) => {
+    if (y + needed > 280) {
+      doc.addPage();
+      y = 20;
+    }
+  };
+
+  const writeWrapped = (text: string, gapAfter = 0) => {
     const lines = doc.splitTextToSize(text, maxLineWidth);
     lines.forEach((line: string) => {
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
+      ensureSpace();
       doc.text(line, margin, y);
       y += lineHeight;
     });
+    y += gapAfter;
   };
 
   doc.setFontSize(18);
@@ -28,31 +33,54 @@ export function exportResultsToPdf(results: ScanResult[]) {
 
   doc.setFontSize(11);
   writeWrapped(`Generated: ${new Date().toLocaleString()}`);
-  y += 2;
-  writeWrapped(`Collectors included: ${results.map((r) => r.resource.toUpperCase()).join(', ')}`);
-  y += 6;
+  writeWrapped(`Collectors included: ${results.map((r) => r.resource.toUpperCase()).join(', ')}`, 4);
 
   results.forEach((result, index) => {
+    ensureSpace(12);
     doc.setFontSize(13);
     writeWrapped(`${index + 1}. ${result.resource.toUpperCase()}`);
     doc.setFontSize(11);
 
     if (result.status === 'error') {
-      writeWrapped(`Status: FAILED`);
-      writeWrapped(`Error: ${result.error ?? 'Unknown error'}`);
-      y += 4;
+      writeWrapped('Status: FAILED');
+      writeWrapped(`Error: ${result.error ?? 'Unknown error'}`, 4);
       return;
     }
 
-    const findingCount = countFindings(result.data);
-    writeWrapped(`Status: SUCCESS`);
-    writeWrapped(`Findings detected: ${findingCount}`);
-    y += 2;
+    const findings = extractFindings(result.data);
+    writeWrapped('Status: SUCCESS');
+    writeWrapped(`Findings detected: ${countFindings(result.data)}`, 2);
 
-    const jsonPreview = JSON.stringify(result.data, null, 2);
-    const truncated = jsonPreview.length > 1800 ? `${jsonPreview.slice(0, 1800)}\n... (truncated)` : jsonPreview;
-    writeWrapped('Data preview:');
-    writeWrapped(truncated);
+    if (findings.length === 0) {
+      writeWrapped('No findings detected.', 4);
+      return;
+    }
+
+    findings.forEach((finding, findingIndex) => {
+      ensureSpace(18);
+      writeWrapped(`Finding ${findingIndex + 1}: ${finding.title}`);
+      writeWrapped(`Severity: ${finding.severity}`);
+      writeWrapped(`Description: ${finding.description}`);
+
+      if (finding.remediation) {
+        writeWrapped(`Remediation: ${finding.remediation}`);
+      }
+
+      if (finding.resourceType) {
+        writeWrapped(`Resource type: ${finding.resourceType}`);
+      }
+
+      if (finding.cisControl) {
+        writeWrapped(`CIS Control: ${finding.cisControl}`);
+      }
+
+      if (finding.owasp) {
+        writeWrapped(`OWASP: ${finding.owasp}`);
+      }
+
+      y += 2;
+    });
+
     y += 4;
   });
 
