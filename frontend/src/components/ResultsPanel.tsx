@@ -13,6 +13,7 @@ import type { ScanResult } from '@/types/scan';
 
 interface ResultsPanelProps {
   results: ScanResult[];
+  riskScores?: Record<string, number>;
 }
 
 function severityClasses(severity: FindingSeverity): string {
@@ -30,7 +31,7 @@ function severityClasses(severity: FindingSeverity): string {
   }
 }
 
-export function ResultsPanel({ results }: ResultsPanelProps) {
+export function ResultsPanel({ results, riskScores = {} }: ResultsPanelProps) {
   if (results.length === 0) {
     return null;
   }
@@ -40,10 +41,10 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-zinc-100">Scan Results</h2>
         <div className="flex flex-wrap gap-2">
-          <Button onClick={() => exportResultsToHtml(results)} variant="secondary">
+          <Button onClick={() => exportResultsToHtml(results, riskScores)} variant="secondary">
             Download HTML
           </Button>
-          <Button onClick={() => exportResultsToPdf(results)} variant="secondary">
+          <Button onClick={() => exportResultsToPdf(results, riskScores)} variant="secondary">
             Download PDF
           </Button>
         </div>
@@ -99,11 +100,18 @@ export function ResultsPanel({ results }: ResultsPanelProps) {
                           <h3 className="text-base font-semibold text-zinc-100">
                             {finding.title}
                           </h3>
-                          <span
-                            className={`rounded border px-2 py-1 text-xs font-semibold ${severityClasses(finding.severity)}`}
-                          >
-                            {finding.severity}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            {riskScores[finding.id] != null && (
+                              <span className="rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs font-semibold text-zinc-200">
+                                Risk: {riskScores[finding.id]}
+                              </span>
+                            )}
+                            <span
+                              className={`rounded border px-2 py-1 text-xs font-semibold ${severityClasses(finding.severity)}`}
+                            >
+                              {finding.severity}
+                            </span>
+                          </div>
                         </div>
 
                         <div className="space-y-2 text-sm text-zinc-300">

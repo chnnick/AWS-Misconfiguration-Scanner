@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import type { ScanResult } from '@/types/scan';
 import { countFindings, extractFindings } from '@/lib/reportUtils';
 
-export function exportResultsToPdf(results: ScanResult[]) {
+export function exportResultsToPdf(results: ScanResult[], riskScores: Record<string, number> = {}) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 14;
@@ -60,6 +60,9 @@ export function exportResultsToPdf(results: ScanResult[]) {
       ensureSpace(18);
       writeWrapped(`Finding ${findingIndex + 1}: ${finding.title}`);
       writeWrapped(`Severity: ${finding.severity}`);
+      if (riskScores[finding.id] != null) {
+        writeWrapped(`Risk score: ${riskScores[finding.id]}`);
+      }
       writeWrapped(`Description: ${finding.description}`);
 
       if (finding.remediation) {

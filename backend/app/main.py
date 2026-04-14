@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from scanner.router import router as scanners_router
+from scanner.router import router as scanners_router, risk_router
 
 from .neo4j_client import neo4j_client
 
@@ -70,6 +70,7 @@ async def log_requests(request: Request, call_next):
 
 
 app.include_router(scanners_router, prefix="/api", tags=["scanner"])
+app.include_router(risk_router, prefix="/api", tags=["risk"])
 
 @app.get("/api/health")
 def health():

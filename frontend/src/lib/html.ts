@@ -24,7 +24,7 @@ function severityClass(severity: string): string {
   }
 }
 
-export function exportResultsToHtml(results: ScanResult[]) {
+export function exportResultsToHtml(results: ScanResult[], riskScores: Record<string, number> = {}) {
   const sections: string[] = [];
 
   results.forEach((result, index) => {
@@ -53,7 +53,10 @@ export function exportResultsToHtml(results: ScanResult[]) {
 <div class="finding">
   <div class="finding-header">
     <h3>${escapeHtml(finding.title)}</h3>
-    <span class="sev ${severityClass(finding.severity)}">${escapeHtml(finding.severity)}</span>
+    <div class="badges">
+      ${riskScores[finding.id] != null ? `<span class="risk-score">Risk: ${riskScores[finding.id]}</span>` : ''}
+      <span class="sev ${severityClass(finding.severity)}">${escapeHtml(finding.severity)}</span>
+    </div>
   </div>
   <p><strong>Description:</strong> ${escapeHtml(finding.description)}</p>
   ${
@@ -132,6 +135,17 @@ export function exportResultsToHtml(results: ScanResult[]) {
     align-items: center;
     gap: 1rem;
     margin-bottom: 0.75rem;
+  }
+  .badges { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .risk-score {
+    display: inline-block;
+    border-radius: 999px;
+    border: 1px solid #52525b;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #3f3f46;
+    color: #e4e4e7;
   }
   .sev {
     display: inline-block;
