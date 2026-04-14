@@ -49,7 +49,13 @@ export function ScanControls({
                         : "text-green-400"
                 }`}
               >
-                {riskScore}
+                {riskScore >= 4.0
+                  ? "High"
+                  : riskScore >= 3.0
+                    ? "Medium"
+                    : riskScore >= 2.0
+                      ? "Low"
+                      : "Minimal"}
               </span>
             </div>
           ) : (

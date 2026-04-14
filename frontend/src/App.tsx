@@ -19,6 +19,7 @@ function App() {
   const [results, setResults] = useState<ScanResult[]>([]);
   const [graphRefreshCount, setGraphRefreshCount] = useState(0);
   const [riskScore, setRiskScore] = useState<number | null>(null);
+  const [riskScores, setRiskScores] = useState<Record<string, number>>({});
 
   const fetchRiskScore = async () => {
     try {
@@ -26,10 +27,16 @@ function App() {
       if (!res.ok) return;
       const body = await res.json();
       if (!Array.isArray(body)) return;
-      const scores = (body as { risk_score: number | null }[])
-        .map((f) => f.risk_score)
-        .filter((s): s is number => s !== null);
-      setRiskScore(scores.length > 0 ? Math.max(...scores) : null);
+      const scoresMap: Record<string, number> = {};
+      const allScores: number[] = [];
+      (body as { finding_id: string; risk_score: number | null }[]).forEach((f) => {
+        if (f.risk_score !== null && f.finding_id) {
+          scoresMap[f.finding_id] = f.risk_score;
+          allScores.push(f.risk_score);
+        }
+      });
+      setRiskScores(scoresMap);
+      setRiskScore(allScores.length > 0 ? Math.max(...allScores) : null);
     } catch {
       // network error or JSON parse failure — leave score as-is
     }
@@ -144,7 +151,7 @@ function App() {
           </div>
         </div>
 
-        <ResultsPanel results={results} />
+        <ResultsPanel results={results} riskScores={riskScores} />
       </main>
     </div>
   );
