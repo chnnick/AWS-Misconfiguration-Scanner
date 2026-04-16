@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import type { ScanResult } from '@/types/scan';
 import { countFindings, extractFindings } from '@/lib/reportUtils';
+import { getRiskLabel } from '@/lib/risk';
 
 export function exportResultsToPdf(results: ScanResult[], riskScores: Record<string, number> = {}) {
   const doc = new jsPDF();
@@ -59,9 +60,12 @@ export function exportResultsToPdf(results: ScanResult[], riskScores: Record<str
     findings.forEach((finding, findingIndex) => {
       ensureSpace(18);
       writeWrapped(`Finding ${findingIndex + 1}: ${finding.title}`);
-      writeWrapped(`Severity: ${finding.severity}`);
-      if (riskScores[finding.id] != null) {
+      const riskScore = riskScores[finding.id];
+      if (riskScore != null) {
+        writeWrapped(`Severity: ${getRiskLabel(riskScore)}`);
         writeWrapped(`Risk score: ${riskScores[finding.id]}`);
+      } else {
+        writeWrapped(`Severity: ${finding.severity}`);
       }
       writeWrapped(`Description: ${finding.description}`);
 

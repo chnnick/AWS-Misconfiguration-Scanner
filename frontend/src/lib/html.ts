@@ -1,5 +1,6 @@
 import type { ScanResult } from '@/types/scan';
 import { countFindings, extractFindings } from '@/lib/reportUtils';
+import { getRiskHtmlCssClass, getRiskLabel } from '@/lib/risk';
 
 function escapeHtml(s: string): string {
   return s
@@ -48,14 +49,19 @@ export function exportResultsToHtml(results: ScanResult[], riskScores: Record<st
     const findingsHtml =
       findings.length > 0
         ? findings
-            .map(
-              (finding) => `
+            .map((finding) => {
+              const riskScore = riskScores[finding.id];
+              const riskLabel = riskScore != null ? getRiskLabel(riskScore) : null;
+              const sevClass = riskLabel != null ? getRiskHtmlCssClass(riskLabel) : severityClass(finding.severity);
+              const sevLabel = riskLabel != null ? riskLabel : finding.severity;
+
+              return `
 <div class="finding">
   <div class="finding-header">
     <h3>${escapeHtml(finding.title)}</h3>
     <div class="badges">
       ${riskScores[finding.id] != null ? `<span class="risk-score">Risk: ${riskScores[finding.id]}</span>` : ''}
-      <span class="sev ${severityClass(finding.severity)}">${escapeHtml(finding.severity)}</span>
+      <span class="sev ${sevClass}">${escapeHtml(sevLabel)}</span>
     </div>
   </div>
   <p><strong>Description:</strong> ${escapeHtml(finding.description)}</p>
@@ -76,7 +82,7 @@ export function exportResultsToHtml(results: ScanResult[], riskScores: Record<st
   }
   ${finding.owasp ? `<p><strong>OWASP:</strong> ${escapeHtml(finding.owasp)}</p>` : ''}
 </div>`
-            )
+            })
             .join('\n')
         : `<p>No findings detected.</p>`;
 
@@ -158,6 +164,7 @@ export function exportResultsToHtml(results: ScanResult[], riskScores: Record<st
   .sev-high { background: #ea580c; color: white; }
   .sev-medium { background: #eab308; color: black; }
   .sev-low { background: #2563eb; color: white; }
+  .sev-minimal { background: #16a34a; color: white; }
   .sev-unknown { background: #52525b; color: white; }
   p { margin: 0.35rem 0; }
 </style>

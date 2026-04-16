@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import type { ResourceToggle } from "@/types/scan";
+import { getRiskLabel, getRiskTextClass } from "@/lib/risk";
 
 interface ScanControlsProps {
   toggles: ResourceToggle[];
@@ -19,6 +20,8 @@ export function ScanControls({
   isScanning,
   riskScore,
 }: ScanControlsProps) {
+  const riskLabel = riskScore != null ? getRiskLabel(riskScore) : null;
+
   return (
     <aside className="flex h-full min-h-0 w-full flex-col rounded-lg border border-zinc-800 bg-zinc-900/80 p-5 shadow-sm">
       <div className="mb-6 shrink-0">
@@ -39,23 +42,9 @@ export function ScanControls({
                 {riskScore}
               </span>
               <span
-                className={`text-xs font-medium ${
-                  riskScore >= 4.0
-                    ? "text-red-400"
-                    : riskScore >= 3.0
-                      ? "text-orange-400"
-                      : riskScore >= 2.0
-                        ? "text-yellow-400"
-                        : "text-green-400"
-                }`}
+                className={`text-xs font-medium ${getRiskTextClass(riskScore)}`}
               >
-                {riskScore >= 4.0
-                  ? "High"
-                  : riskScore >= 3.0
-                    ? "Medium"
-                    : riskScore >= 2.0
-                      ? "Low"
-                      : "Minimal"}
+                {riskLabel}
               </span>
             </div>
           ) : (

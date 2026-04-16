@@ -10,6 +10,7 @@ import { exportResultsToHtml } from '@/lib/html';
 import { exportResultsToPdf } from '@/lib/pdf';
 import { countFindings, extractFindings, type FindingSeverity } from '@/lib/reportUtils';
 import type { ScanResult } from '@/types/scan';
+import { getRiskLabel, getRiskTailwindClasses } from '@/lib/risk';
 
 interface ResultsPanelProps {
   results: ScanResult[];
@@ -107,9 +108,15 @@ export function ResultsPanel({ results, riskScores = {} }: ResultsPanelProps) {
                               </span>
                             )}
                             <span
-                              className={`rounded border px-2 py-1 text-xs font-semibold ${severityClasses(finding.severity)}`}
+                              className={`rounded border px-2 py-1 text-xs font-semibold ${
+                                riskScores[finding.id] != null
+                                  ? getRiskTailwindClasses(getRiskLabel(riskScores[finding.id]))
+                                  : severityClasses(finding.severity)
+                              }`}
                             >
-                              {finding.severity}
+                              {riskScores[finding.id] != null
+                                ? getRiskLabel(riskScores[finding.id])
+                                : finding.severity}
                             </span>
                           </div>
                         </div>
