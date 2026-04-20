@@ -1,4 +1,4 @@
-# AWS Misconfiguration Scanner
+# AWS Misconfiguration Scanner - CloudSight
 CY4930 Capstone Project
 
 A full stack cloud security scanning platform that detects AWS misconfigurations and visualizes them as an interactive graph using Neo4j.
